@@ -68,5 +68,7 @@ class TestFspSolver(unittest.TestCase):
         prob = np.asarray(solution.GetProbViewer())
         self.assertAlmostEqual(prob.sum(), 1.0, 4)
 
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,17 +1,9 @@
 cimport arma4cy as arma
+from pacmensl_callbacks cimport *
 from state_set cimport *
 from libcpp.vector cimport vector
 from discrete_distribution cimport *
 from mpi4py.libmpi cimport *
-
-cdef extern from "PyCallbacksWrapper.h":
-    cdef cppclass PyPropWrapper:
-        PyPropWrapper()
-        PyPropWrapper(object)
-
-    cdef cppclass PyTFunWrapper:
-        PyTFunWrapper()
-        PyTFunWrapper(object)
 
 cdef extern from "petsc.h":
     ctypedef double PetscReal
@@ -24,49 +16,51 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
     cdef cppclass Model:
         arma.Mat[int] stoichiometry_matrix_
-        PyTFunWrapper t_fun_
-        void* t_fun_args_
-        PyPropWrapper prop_
-        void* prop_args_
+        PyTFunWrapper prop_t_
+        PyPropWrapper prop_x_
+        void* prop_t_args_
+        void* prop_x_args_
+
+        Model(arma.Mat[int] stoichiometry_matrix, PyTFunWrapper, PyPropWrapper) except +
+
+        Model(arma.Mat[int] stoichiometry_matrix, PyTFunWrapper, PyPropWrapper, void*, void*) except +
 
         Model();
 
-        Model(arma.Mat[int] stoichiometry_matrix, PyTFunWrapper t_fun, void* t_fun_args, PyPropWrapper prop, void* prop_fun_args) except +
-
         Model(const Model & model)
+
+        Model& operator=(Model &model)
+        Model& operator=(Model &&model)
 
     cdef cppclass FspSolverMultiSinks:
         FspSolverMultiSinks( MPI_Comm _comm)
-        FspSolverMultiSinks( MPI_Comm _comm, PartitioningType _part_type)
-        FspSolverMultiSinks( MPI_Comm _comm, PartitioningType _part_type,
-                                      ODESolverType _solve_type)
 
-        int SetConstraintFunctions( PyConstrWrapper &lhs_constr )
+        int SetConstraintFunctions( PyConstrWrapper &lhs_constr ) except +
 
-        int SetInitialBounds( arma.Row[int] &_fsp_size )
+        int SetInitialBounds( arma.Row[int] &_fsp_size ) except +
 
-        int SetExpansionFactors( arma.Row[ PetscReal ] &_expansion_factors )
+        int SetExpansionFactors( arma.Row[ PetscReal ] &_expansion_factors ) except +
 
-        int SetModel( Model &model )
+        int SetModel( Model &model ) except +
 
-        int SetVerbosity( int verbosity_level )
+        int SetVerbosity( int verbosity_level ) except +
 
-        int SetInitialDistribution( arma.Mat[int] &_init_states, arma.Col[PetscReal] &_init_probs )
+        int SetInitialDistribution( arma.Mat[int] &_init_states, arma.Col[PetscReal] &_init_probs ) except +
 
-        int SetLogging( PetscBool logging )
+        int SetLogging( PetscBool logging ) except +
 
-        int SetFromOptions( )
+        int SetFromOptions( ) except +
 
-        int SetLoadBalancingMethod( PartitioningType part_type )
+        int SetLoadBalancingMethod( PartitioningType part_type ) except +
 
-        int SetOdesType( ODESolverType odes_type )
+        int SetOdesType( ODESolverType odes_type ) except +
 
-        int SetUp( )
+        int SetUp( ) except +
 
-        const StateSetBase *GetStateSet( )
+        const StateSetBase *GetStateSet( ) except +
 
-        DiscreteDistribution Solve( PetscReal t_final, PetscReal fsp_tol )
+        DiscreteDistribution Solve( PetscReal t_final, PetscReal fsp_tol ) except +
 
-        vector[DiscreteDistribution] SolveTspan( vector[PetscReal] &tspan, PetscReal fsp_tol )
+        vector[DiscreteDistribution] SolveTspan( vector[PetscReal] &tspan, PetscReal fsp_tol ) except +
 
-        int DestroySolverState( )
+        int ClearState( ) except +

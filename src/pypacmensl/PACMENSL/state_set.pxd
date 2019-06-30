@@ -8,13 +8,20 @@ cdef extern from "PyCallbacksWrapper.h":
         PyConstrWrapper(object)
 
 cdef extern from "pacmensl.h" namespace "pacmensl":
-    ctypedef enum PartitioningType: BLOCK, GRAPH, HYPERGRAPH, HIERARCHICAL
+    cdef cppclass PartitioningType:
+        pass
 
-    ctypedef enum PartitioningApproach: FROMSCRATCH, REPARTITION, REFINE
+    cdef cppclass PartitioningApproach:
+        pass
 
+cdef extern from "pacmensl.h" namespace "pacmensl::PartitioningType":
+    cdef PartitioningType GRAPH
+    cdef PartitioningType HYPERGRAPH
+    cdef PartitioningType BLOCK
+
+cdef extern from "pacmensl.h" namespace "pacmensl":
     cdef cppclass StateSetBase:
-        StateSetBase(libmpi.MPI_Comm new_comm, int num_species, PartitioningType lb_type,
-                     PartitioningApproach lb_approach)
+        StateSetBase(libmpi.MPI_Comm new_comm)
 
         void SetStoichiometryMatrix(int num_species, int num_reactions, const int*values)
 
@@ -39,14 +46,11 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
     ctypedef fsp_constr_multi_fn
 
     cdef cppclass StateSetConstrained:
-        StateSetConstrained(libmpi.MPI_Comm comm, int num_species, PartitioningType part,
-                            PartitioningApproach repart) except +
+        StateSetConstrained(libmpi.MPI_Comm comm) except +
 
-        void SetStoichiometryMatrix(arma.Mat[int] SM) except +
+        int SetStoichiometryMatrix(arma.Mat[int] SM) except +
 
-        void SetInitialStates(int num_states, int*vals) except +
-
-        void AddStates(arma.Mat[int] X) except +
+        int AddStates(arma.Mat[int] X) except +
 
         void State2Index(int num_states, int *state, int *indx)
 
@@ -62,13 +66,19 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         void CopyStatesOnProc(int num_local_states, int*state_array) const
 
-        void CheckConstraints(int num_states, int *x, int *satisfied)
+        int CheckConstraints(int num_states, int *x, int *satisfied)
 
         int GetNumConstraints()
 
-        void SetShape(int num_constraints, PyConstrWrapper lhs_fun, int *bounds, void *args)
+        int SetLoadBalancingScheme(PartitioningType type)
 
-        void SetShapeBounds(int num_constraints, int *bounds)
+        int SetShape(int num_constraints, PyConstrWrapper lhs_fun, int *bounds, void *args)
 
-        void Expand()
+        int SetShapeBounds(int num_constraints, int *bounds)
+
+        int SetUp()
+
+        int Expand()
+
+        int Clear()
 

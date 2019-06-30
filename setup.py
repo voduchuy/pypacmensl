@@ -38,6 +38,6 @@ ext = Extension(name='pypacmensl.PACMENSL',
 setup(
       packages = ['pypacmensl'],
       package_dir = {'pypacmensl' : 'src/pypacmensl'},
-      ext_modules=cythonize(ext),
+      ext_modules=cythonize(ext, language_level=3),
       **metadata
       )
