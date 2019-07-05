@@ -1,5 +1,5 @@
 import unittest
-import pypacmensl.PACMENSL as pac
+import pypacmensl.fsp_solver.multi_sinks as pac
 import mpi4py.MPI as mpi
 import numpy as np
 
@@ -25,20 +25,17 @@ def propensity(reaction, states, outs):
 
 def simple_constr(X, out):
     # The spear of Adun
-    n_constr = 3
-    assert(n_constr*X.shape[0] == out.size)
-    out[0::n_constr] = X[:,0]
-    out[1::n_constr] = X[:,1]
-    out[2::n_constr] = X[:,0] + X[:,1]
+    out[:, 0] = X[:, 0]
+    out[:, 1] = X[:, 1]
 
-init_bounds=np.array([10, 10, 10])
+init_bounds=np.array([10, 10])
 
 class TestFspSolver(unittest.TestCase):
     def setUp(self):
         self.stoich_mat = np.array([[1, 0], [-1, 0], [0, 1], [0, -1]])
 
     def test_serial_constructor(self):
-        solver = pac.FspSolverMultiSinks()
+        solver = pac.FspSolverMultiSinks(mpi.COMM_SELF)
 
     def test_set_model(self):
         solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
@@ -63,12 +60,47 @@ class TestFspSolver(unittest.TestCase):
         X0 = np.array([[0,0]])
         p0 = np.array([1.0])
         solver.SetInitialDist(X0, p0)
-        solver.SetUp()
         solution = solver.Solve(10.0, 1.0e-4)
         prob = np.asarray(solution.GetProbViewer())
         self.assertAlmostEqual(prob.sum(), 1.0, 4)
 
+    def test_solve_parallel(self):
+        solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
+        solver.SetModel(self.stoich_mat, tcoeff, propensity)
+        solver.SetFspShape(simple_constr, init_bounds)
+        X0 = np.array([[0,0]])
+        p0 = np.array([1.0])
+        solver.SetInitialDist(X0, p0)
+        solution = solver.Solve(10.0, 1.0e-4)
+        prob = np.asarray(solution.GetProbViewer())
+        self.assertAlmostEqual(prob.sum(), 1.0, 4)
 
+    def test_solve_parallel_krylov(self):
+        solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
+        solver.SetModel(self.stoich_mat, tcoeff, propensity)
+        solver.SetFspShape(simple_constr, init_bounds)
+        X0 = np.array([[0,0]])
+        p0 = np.array([1.0])
+        solver.SetInitialDist(X0, p0)
+        solver.SetOdeSolver("Krylov")
+        solution = solver.Solve(10.0, 1.0e-4)
+        prob = np.asarray(solution.GetProbViewer())
+        self.assertAlmostEqual(prob.sum(), 1.0, 4)
+
+    def test_solve_parallel_twice(self):
+        solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
+        solver.SetModel(self.stoich_mat, tcoeff, propensity)
+        solver.SetFspShape(simple_constr, init_bounds)
+        X0 = np.array([[0,0]])
+        p0 = np.array([1.0])
+        solver.SetInitialDist(X0, p0)
+        solver.SetOdeSolver("Krylov")
+        solution = solver.Solve(10.0, 1.0e-4)
+        solver.ClearState()
+        solver.SetInitialDist(X0, p0)
+        solution = solver.Solve(10.0, 1.0e-4)
+        prob = np.asarray(solution.GetProbViewer())
+        self.assertAlmostEqual(prob.sum(), 1.0, 4)
 
 if __name__ == '__main__':
     unittest.main()

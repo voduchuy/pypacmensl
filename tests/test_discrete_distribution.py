@@ -1,5 +1,5 @@
 import unittest
-import pypacmensl.PACMENSL as pac
+import pypacmensl.fsp_solver.distribution as pac
 import mpi4py.MPI as mpi
 import numpy as np
 

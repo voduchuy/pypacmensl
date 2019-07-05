@@ -1,10 +1,9 @@
 import mpi4py.MPI as MPI
-import pypacmensl.PACMENSL as pacmensl
+import pypacmensl.fsp_solver.multi_sinks as pacmensl
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 from math import exp
-
 
 Ahog = 9.3E09
 num_genes = 1
@@ -13,14 +12,15 @@ etahog = 5.9
 r1 = 6.1E-3
 r2 = 6.9E-3
 
+
 def hog1p(t):
     """Hog1p signal in arbitrary unit (AU)"""
-    return (1.0 - exp(-r1 * t) )* exp(-r2 * t)
+    return (1.0 - exp(-r1 * t)) * exp(-r2 * t)
 
 
 def hog1pstar(t):
     """Saturated hog1p signal"""
-    return ((hog1p(t) / (1.0 + hog1p(t)/Mhog)) ** etahog)*Ahog
+    return ((hog1p(t) / (1.0 + hog1p(t) / Mhog)) ** etahog) * Ahog
 
 
 t0 = 2.6E-1
@@ -38,7 +38,6 @@ kr3 = 3.2E-2
 gamma_nuc = 2.2E-6
 k_transport = 2.6E-1
 gamma_cyt = 19.3E-3
-
 
 x0 = np.array([[num_genes, 0, 0, 0, 0, 0]])
 p0 = np.array([1.0])
@@ -113,7 +112,7 @@ def propensity(reaction, X, out):
 def t_fun(time, out):
     out[0] = np.double(k01)
     if time > t0:
-        out[1] = np.double(max( 0.0, k10a - k10b*hog1pstar(time - t0)))
+        out[1] = np.double(max(0.0, k10a - k10b * hog1pstar(time - t0)))
     else:
         out[1] = 0.0
     out[2] = np.double(k12)
@@ -139,12 +138,8 @@ solver.SetInitialDist(x0, p0)
 solver.SetVerbosity(2)
 solver.SetUp()
 
-tspan = np.linspace(0, 60*15, 5)
+tspan = np.linspace(0, 60 * 15, 5)
 solution = solver.SolveTspan(tspan, 1.0e-2)
-
-
-
-
 
 ntspan = tspan.size
 marginals = []
@@ -159,9 +154,9 @@ if rank is 0:
     for i in range(4, 6):
         for j in range(0, ntspan):
             # marginals.append(solution.Marginal(i))
-            ax = fig.add_subplot(2, ntspan, (i-4) * ntspan + 1 + j)
-            ax.plot(marginals[i * ntspan  + j])
-            ax.fill_between(range(0,marginals[i*ntspan+j].size), 0, marginals[i * ntspan  + j])
+            ax = fig.add_subplot(2, ntspan, (i - 4) * ntspan + 1 + j)
+            ax.plot(marginals[i * ntspan + j])
+            ax.fill_between(range(0, marginals[i * ntspan + j].size), 0, marginals[i * ntspan + j])
             ax.set_xlim(left=0, auto=True)
             ax.set_ylim(0, 1)
             ax.grid(b=1)

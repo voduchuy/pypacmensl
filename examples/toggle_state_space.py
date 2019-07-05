@@ -1,6 +1,6 @@
 import mpi4py.MPI as mpi
 import numpy as np
-import pypacmensl.PACMENSL as sp
+import pypacmensl as sp
 import matplotlib.pyplot as plt
 
 def plot_state_set(comm, my_set):
@@ -42,11 +42,11 @@ x0 = np.array([[1,2],[0,0]], dtype=np.intc)
 def simple_constr(X, out):
     # The spear of Adun
     n_constr = 5
-    out[0::n_constr] = X[:,0]
-    out[1::n_constr] = X[:,1]
-    out[2::n_constr] = X[:,0] + X[:,1]
-    out[3::n_constr] = -0.5*X[:,0] + X[:,1]
-    out[4::n_constr] = X[:,0] - 0.5*X[:,1]
+    out[:,0] = X[:,0]
+    out[:,1] = X[:,1]
+    out[:,2] = X[:,0] + X[:,1]
+    out[:,3] = -0.5*X[:,0] + X[:,1]
+    out[:,4] = X[:,0] - 0.5*X[:,1]
 
 bounds = np.array([300, 300, 300, 70, 70])
 
