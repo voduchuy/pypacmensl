@@ -16,7 +16,8 @@ metadata = {
         'maintainer_email': 'vdhuy91@gmail.com',
 }
 
-extra_compile_args = ['-std=c++11', '-Wall', '-Wextra', '-stdlib=libc++', '-mmacosx-version-min=10.9']
+extra_compile_args = ['-std=c++11', '-Wall', '-Wextra']
+# , '-stdlib=libc++', '-mmacosx-version-min=10.9']
 mpi_compile_args = os.popen("mpic++ --showme:compile").read().strip().split(' ')
 extra_compile_args += mpi_compile_args
 mpi_link_args = os.popen("mpic++ --showme:link").read().strip().split(' ')
