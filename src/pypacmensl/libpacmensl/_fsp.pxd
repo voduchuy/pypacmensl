@@ -122,3 +122,27 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
           SensDiscreteDistribution Solve(PetscReal t_final, PetscReal fsp_tol)
           vector[SensDiscreteDistribution] SolveTspan(vector[PetscReal] &tspan, PetscReal fsp_tol)
           int ClearState()
+
+cdef extern from 'pacmensl.h' namespace 'pacmensl':
+    cdef cppclass StationaryFspSolverMultiSinks:
+        StationaryFspSolverMultiSinks(MPI_Comm comm)
+
+        int SetConstraintFunctions(PyConstrWrapper lhs_constr)
+
+        int SetInitialBounds(arma.Row[int] &_fsp_size)
+
+        int SetExpansionFactors(arma.Row[PetscReal] &_expansion_factors)
+
+        int SetModel(Model &model)
+
+        int SetVerbosity(int verbosity_level)
+
+        int SetUp()
+
+        int SetInitialDistribution(const arma.Mat[int] &_init_states, const arma.Col[double] &_init_probs)
+
+        int SetLoadBalancingMethod(PartitioningType part_type)
+
+        DiscreteDistribution Solve(PetscReal sfsp_tol)
+
+        int ClearState()

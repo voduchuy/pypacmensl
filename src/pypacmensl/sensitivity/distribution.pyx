@@ -10,6 +10,9 @@ cdef class SensDiscreteDistribution:
         if self.this_ is not NULL:
             del self.this_
 
+    cpdef GetNumParameters(self):
+        return self.this_[0].dp_.size()
+
     cpdef GetStatesViewer(self):
         cdef int* state_ptr
         cdef:
@@ -70,6 +73,15 @@ cdef class SensDiscreteDistribution:
         return np.copy(np.asarray(marginal_view))
 
     def SensMarginal(self, int iS, int species):
+        """
+        Compute the sensitivity of the marginal distribution.
+        :param iS: sensitivity parameter index.
+        :type iS:
+        :param species: species to compute the marginal distribution for.
+        :type species:
+        :return:
+        :rtype:
+        """
         cdef arma.Col[_sdd.PetscReal] smarginal
         cdef int ierr = _sdd.Compute1DSensMarginal(self.this_[0],
                               iS, species, smarginal)

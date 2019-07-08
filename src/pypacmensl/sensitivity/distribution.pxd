@@ -17,3 +17,5 @@ cdef class SensDiscreteDistribution:
     cpdef GetSensViewer(self, int iS)
 
     cpdef RestoreSensViewer(self, int iS, cnp.ndarray sensview)
+
+    cpdef GetNumParameters(self)

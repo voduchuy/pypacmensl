@@ -1,3 +1,4 @@
 # distutils : language = c++
 
-__all__ =["distribution", "multi_sinks"]
+from pypacmensl.fsp_solver.distribution import DiscreteDistribution
+from pypacmensl.fsp_solver.multi_sinks import FspSolverMultiSinks

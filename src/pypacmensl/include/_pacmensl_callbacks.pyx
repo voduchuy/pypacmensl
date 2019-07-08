@@ -7,7 +7,6 @@ cdef public int call_py_prop_obj(object, const int reaction, const int num_speci
     cdef double[::1] out_view = <double[:num_states]> outputs
     state_np = np.asarray(state_view)
     out_np = np.asarray(out_view)
-    cdef double propensity
     try:
         object(reaction, state_np, out_np)
     except:
@@ -28,8 +27,8 @@ cdef public int call_py_constr_obj(obj, int num_species, int num_constr, int n_s
     cdef int[:,::1] outputs_view = <int[:n_states, :num_constr]> outputs
     states_np = np.asarray(states_view)
     outputs_np = np.asarray(outputs_view)
-    # try:
-    obj(states_np, outputs_np)
-    # except:
-    #     return -1
+    try:
+        obj(states_np, outputs_np)
+    except:
+        return -1
     return 0

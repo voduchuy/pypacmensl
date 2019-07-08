@@ -119,7 +119,7 @@ cdef class SensFspSolverMultiSinks:
         cdef vector[arma.Col[_fsp.PetscReal]] s0_vector
         cdef cnp.ndarray v
         for i in range(0, len(s0)):
-            v = np.asarray(s0[i])
+            v = np.ascontiguousarray(s0[i]).astype(np.double)
             s0_vector.push_back(arma.Col[_fsp.PetscReal](<double*> v.data, v.size, 1, 1))
         ierr = self.this_[0].SetInitialDistribution(X0_arma, p0_arma, s0_vector)
         assert (ierr == 0)

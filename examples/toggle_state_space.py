@@ -1,6 +1,6 @@
 import mpi4py.MPI as mpi
 import numpy as np
-import pypacmensl as sp
+import pypacmensl.state_set.constrained as sp
 import matplotlib.pyplot as plt
 
 def plot_state_set(comm, my_set):
@@ -33,6 +33,7 @@ def plot_state_set(comm, my_set):
         ax.set_ylabel('Species 2')
     return fig, ax
 
+#%%
 comm = mpi.COMM_WORLD
 num_procs = comm.size
 my_rank = comm.rank
@@ -49,7 +50,7 @@ def simple_constr(X, out):
     out[:,4] = X[:,0] - 0.5*X[:,1]
 
 bounds = np.array([300, 300, 300, 70, 70])
-
+#%%
 my_set_block = sp.StateSetConstrained(comm)
 my_set_block.SetLBMethod("block")
 my_set_block.SetStoichiometry(sm)
@@ -59,7 +60,7 @@ my_set_block.AddStates(x0)
 my_set_block.Expand()
 f0, ax0 = plot_state_set(comm, my_set_block)
 ax0.set_title('Naively partitioned FSP')
-
+#%%
 my_set_graph = sp.StateSetConstrained(comm)
 my_set_graph.SetStoichiometry(sm)
 my_set_graph.SetLBMethod("graph")
@@ -69,7 +70,7 @@ my_set_graph.AddStates(x0)
 my_set_graph.Expand()
 f1 , ax1 = plot_state_set(comm, my_set_graph)
 ax1.set_title('Graph-partitioned FSP')
-
+#%%
 my_set_hypergraph = sp.StateSetConstrained(comm)
 my_set_hypergraph.SetStoichiometry(sm)
 my_set_hypergraph.SetLBMethod("hypergraph")
@@ -80,6 +81,7 @@ my_set_hypergraph.Expand()
 f2, ax2 = plot_state_set(comm, my_set_hypergraph)
 ax2.set_title('Hypergraph-partitioned FSP')
 
+#%%
 if (my_rank == 0):
     f0.savefig('naive_fsp.eps', format='eps')
     f1.savefig('graph_fsp.eps', format='eps')
