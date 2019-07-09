@@ -1,10 +1,7 @@
 from mpi4py cimport libmpi
 cimport pypacmensl.arma.arma4cy as arma
 
-cdef extern from "PyCallbacksWrapper.hpp":
-    cdef cppclass PyConstrWrapper:
-        PyConstrWrapper()
-        PyConstrWrapper(object)
+from pypacmensl.libpacmensl._callbacks cimport *
 
 cdef extern from "pacmensl.h" namespace "pacmensl":
     cdef cppclass PartitioningType:
@@ -71,7 +68,7 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         int SetLoadBalancingScheme(PartitioningType type)
 
-        int SetShape(int num_constraints, PyConstrWrapper lhs_fun, int *bounds, void *args)
+        int SetShape(int num_constraints, ConstrFun lhs_fun, int *bounds, void *args)
 
         int SetShapeBounds(int num_constraints, int *bounds)
 

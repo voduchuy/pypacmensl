@@ -30,36 +30,34 @@ if platform == 'darwin':
 
 
 pypacmensl_dirs = ['./src/pypacmensl']
-
+#
 pypacmensl_ext=[]
 
-pypacmensl_subpackages=['arma', 'fsp_solver', 'sensitivity', 'smfish', 'state_set', 'stationary', 'utils']
-
-callback_ext = Extension("pypacmensl.callbacks._pacmensl_callbacks",
-                         sources=['src/pypacmensl/callbacks/_pacmensl_callbacks.pyx',
-                                  'src/pypacmensl/callbacks/pacmensl_callbacks.pyx'],
-                         language='c++',
-                         include_dirs=[np.get_include(), "src/pypacmensl/callbacks"],
-                         extra_compile_args= extra_compile_args,
-                         extra_link_args=extra_links,
-                         )
-
-callback_ext = cythonize(callback_ext, language_level=3)
-
-pypacmensl_ext.extend(callback_ext)
+pypacmensl_subpackages=['callbacks', 'arma', 'fsp_solver', 'sensitivity', 'smfish', 'state_set', 'stationary', 'utils']
 
 for folder in pypacmensl_subpackages:
-    extensions = cythonize('**/*.pyx', language_level=3, include_path=pypacmensl_dirs)
+    extensions = cythonize('src/pypacmensl/'+ folder + '/*.pyx', language_level=3, include_path=pypacmensl_dirs)
     for ext in extensions:
         ext.language = "c++"
         ext.libraries = ['pacmensl', 'petsc']
         ext.extra_compile_args = extra_compile_args
-        ext.include_dirs = [os.environ['PETSC_DIR'] + '/include', np.get_include(),
-                            "src/pypacmensl/callbacks"]
+        ext.include_dirs = [os.environ['PETSC_DIR'] + '/include', np.get_include()]
         ext.library_dirs = [os.environ['PETSC_DIR'] + '/lib']
         ext.extra_link_args=extra_links
 
     pypacmensl_ext.extend(extensions)
+
+# extensions = cythonize('**/*.pyx', language_level=3, include_path=pypacmensl_dirs)
+# for ext in extensions:
+#     ext.language = "c++"
+#     ext.libraries = ['pacmensl', 'petsc']
+#     ext.extra_compile_args = extra_compile_args
+#     ext.include_dirs = [os.environ['PETSC_DIR'] + '/include', np.get_include(),
+#                         "src/pypacmensl/callbacks"]
+#     ext.library_dirs = [os.environ['PETSC_DIR'] + '/lib']
+#     ext.extra_link_args=extra_links
+#
+# pypacmensl_ext.extend(extensions)
 
 # %%
 

@@ -41,8 +41,8 @@ cdef class FspSolverMultiSinks:
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
 
-        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, PyTFunWrapper(propensity_t),
-                                              PyPropWrapper(propensity_x))
+        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_t_fun_obj,
+                                              call_py_prop_obj, <void*>propensity_t, <void*> propensity_x)
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -92,7 +92,7 @@ cdef class FspSolverMultiSinks:
         :rtype:
         """
         if constr_fun is not None:
-            self.this_[0].SetConstraintFunctions(PyConstrWrapper(constr_fun))
+            self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*>constr_fun)
 
         if constr_bound.dtype is not np.intc:
             constr_bound = constr_bound.astype(np.intc)

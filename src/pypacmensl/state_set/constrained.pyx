@@ -3,6 +3,8 @@
 from libc.stdlib cimport malloc, free
 cimport mpi4py.MPI as MPI
 cimport numpy as cnp
+
+from pypacmensl.callbacks.pacmensl_callbacks cimport *
 from pypacmensl cimport libpacmensl
 cimport pypacmensl.arma.arma4cy as arma
 
@@ -11,7 +13,6 @@ import mpi4py.MPI as mpi
 
 cdef class StateSetConstrained:
     cdef libpacmensl.StateSetConstrained* this_
-    cdef libpacmensl.PyConstrWrapper constr_
 
     def __cinit__(self, MPI.Comm comm):
         cdef MPI.Comm comm_
@@ -57,8 +58,7 @@ cdef class StateSetConstrained:
         for i in range(0, num_constraints):
             c_bounds[i] = init_bounds[i]
         if constr_fun is not None:
-            self.constr_ = libpacmensl.PyConstrWrapper(constr_fun)
-            ierr = self.this_[0].SetShape(num_constraints, self.constr_, c_bounds, NULL)
+            ierr = self.this_[0].SetShape(num_constraints, call_py_constr_obj, c_bounds, <void*>constr_fun)
         else:
             ierr = self.this_[0].SetShapeBounds(num_constraints, c_bounds)
         free(c_bounds)

@@ -1,12 +1,12 @@
 from libcpp.vector cimport *
 from mpi4py.libmpi cimport MPI_Comm
 
-from pypacmensl.petsc.petsc_objects cimport PetscBool, PetscReal, PetscInt
 from pypacmensl.arma cimport arma4cy as arma
+from pypacmensl.libpacmensl._callbacks cimport *
+from pypacmensl.petsc.petsc_objects cimport PetscBool, PetscReal, PetscInt
 from pypacmensl.libpacmensl._discrete_distribution cimport DiscreteDistribution
 from pypacmensl.libpacmensl._sens_discrete_distribution cimport SensDiscreteDistribution
 from pypacmensl.libpacmensl._state_set cimport PartitioningType, GRAPH, HYPERGRAPH, BLOCK, StateSetBase
-from pypacmensl.callbacks.pacmensl_callbacks cimport PyTFunWrapper, PyPropWrapper, PyConstrWrapper
 
 ctypedef void* void_ptr
 
@@ -17,14 +17,14 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
     cdef cppclass Model:
         arma.Mat[int] stoichiometry_matrix_
-        PyTFunWrapper prop_t_
-        PyPropWrapper prop_x_
+        PropTFun prop_t_
+        PropXFun prop_x_
         void* prop_t_args_
         void* prop_x_args_
 
-        Model(arma.Mat[int] stoichiometry_matrix, PyTFunWrapper, PyPropWrapper) except +
+        Model(arma.Mat[int] stoichiometry_matrix, PropTFun, PropXFun) except +
 
-        Model(arma.Mat[int] stoichiometry_matrix, PyTFunWrapper, PyPropWrapper, void*, void*) except +
+        Model(arma.Mat[int] stoichiometry_matrix, PropTFun, PropXFun, void*, void*) except +
 
         Model();
 
@@ -37,7 +37,9 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
     cdef cppclass FspSolverMultiSinks:
         FspSolverMultiSinks( MPI_Comm _comm)
 
-        int SetConstraintFunctions( PyConstrWrapper lhs_constr ) except +
+        int SetConstraintFunctions( ConstrFun lhs_constr ) except +
+
+        int SetConstraintFunctions( ConstrFun lhs_constr, void* constr_args ) except +
 
         int SetInitialBounds( arma.Row[int] _fsp_size ) except +
 
@@ -68,14 +70,14 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         int ClearState( ) except +
 
 cdef extern from "pacmensl.h" namespace "pacmensl":
-    cdef cppclass SensModel:
+    cdef cppclass SensModel(Model):
         int                   num_reactions_
         int                   num_parameters_
         arma.Mat[int]         stoichiometry_matrix_
-        PyTFunWrapper         prop_t_
-        PyPropWrapper         prop_x_
-        vector[PyPropWrapper]  dprop_x_
-        vector[PyTFunWrapper] dprop_t_
+        PropTFun         prop_t_
+        PropXFun         prop_x_
+        vector[PropXFun]  dprop_x_
+        vector[PropTFun] dprop_t_
         void                  *prop_t_args_
         void                  *prop_x_args_
         vector[void_ptr]   dprop_x_args_
@@ -86,16 +88,16 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         SensModel()
 
         SensModel(arma.Mat[int] stoichiometry_matrix,
-                  PyTFunWrapper & prop_t,
-                  PyPropWrapper & prop_x,
-                  vector[PyTFunWrapper] & dprop_t,
-                  vector[PyPropWrapper] & dprop_x)
+                  PropTFun & prop_t,
+                  PropXFun & prop_x,
+                  vector[PropTFun] & dprop_t,
+                  vector[PropXFun] & dprop_x)
 
         SensModel(arma.Mat[int] stoichiometry_matrix,
-                  PyTFunWrapper & prop_t,
-                  PyPropWrapper & prop_x,
-                  vector[PyTFunWrapper] & dprop_t,
-                  vector[PyPropWrapper] & dprop_x,
+                  PropTFun & prop_t,
+                  PropXFun & prop_x,
+                  vector[PropTFun] & dprop_t,
+                  vector[PropXFun] & dprop_x,
                   vector[int]& dprop_ic ,
                   vector[int]& dprop_rowptr)
 
@@ -108,7 +110,7 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 cdef extern from "pacmensl.h" namespace "pacmensl":
     cdef cppclass SensFspSolverMultiSinks:
           SensFspSolverMultiSinks(MPI_Comm _comm)
-          int SetConstraintFunctions(PyConstrWrapper lhs_constr)
+          int SetConstraintFunctions(ConstrFun lhs_constr, void* args)
           int SetInitialBounds(arma.Row[int] &_fsp_size)
           int SetExpansionFactors(arma.Row[PetscReal] &_expansion_factors)
           int SetModel(SensModel &model)
@@ -127,7 +129,7 @@ cdef extern from 'pacmensl.h' namespace 'pacmensl':
     cdef cppclass StationaryFspSolverMultiSinks:
         StationaryFspSolverMultiSinks(MPI_Comm comm)
 
-        int SetConstraintFunctions(PyConstrWrapper lhs_constr)
+        int SetConstraintFunctions(ConstrFun lhs_constr, void* args)
 
         int SetInitialBounds(arma.Row[int] &_fsp_size)
 
