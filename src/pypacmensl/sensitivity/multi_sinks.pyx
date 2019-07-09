@@ -69,21 +69,26 @@ cdef class SensFspSolverMultiSinks:
 
         cdef _fsp.SensModel model_
         model_.stoichiometry_matrix_ = stoich_matrix_arma
-        model_.prop_t_ = PyTFunWrapper(propensity_t)
-        model_.prop_x_ = PyPropWrapper(propensity_x)
+        model_.prop_t_ = call_py_t_fun_obj
+        model_.prop_x_ = call_py_prop_obj
+        model_.prop_t_args_ = <void*> propensity_t
+        model_.prop_x_args_ = <void*> propensity_x
 
-
-        model_.dprop_t_.reserve(len(d_propensity_t))
-        for f in d_propensity_t:
-            model_.dprop_t_.push_back(PyTFunWrapper(f))
-
-        model_.dprop_x_.reserve(len(d_propensity_x))
-        for f in d_propensity_x:
-            model_.dprop_x_.push_back(PyPropWrapper(f))
 
         model_.num_parameters_ = model_.dprop_x_.size()
-        model_.dprop_t_args_ = vector[_fsp.void_ptr](model_.num_parameters_, NULL)
-        model_.dprop_x_args_ = vector[_fsp.void_ptr](model_.num_parameters_, NULL)
+
+        model_.dprop_t_.reserve(len(d_propensity_t))
+        model_.dprop_t_args_.reserve(model_.num_parameters_)
+        for f in d_propensity_t:
+            model_.dprop_t_.push_back(call_py_t_fun_obj)
+            model_.dprop_t_args_.push_back(<void*>f)
+
+        model_.dprop_x_.reserve(model_.num_parameters_)
+        model_.dprop_x_args_.reserve(model_.num_parameters_)
+        for f in d_propensity_x:
+            model_.dprop_x_.push_back(call_py_prop_obj)
+            model_.dprop_x_args_.push_back(<void*>f)
+
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -140,7 +145,7 @@ cdef class SensFspSolverMultiSinks:
         :rtype:
         """
         if constr_fun is not None:
-            self.this_[0].SetConstraintFunctions(PyConstrWrapper(constr_fun))
+            self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*>constr_fun)
 
         if constr_bound.dtype is not np.intc:
             constr_bound = constr_bound.astype(np.intc)

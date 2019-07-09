@@ -8,7 +8,7 @@ from pypacmensl.arma cimport arma4cy as arma
 from pypacmensl.libpacmensl cimport _sens_discrete_distribution as _sdd
 from pypacmensl.libpacmensl cimport _fsp
 from pypacmensl.sensitivity cimport distribution as sdd
-from pypacmensl.callbacks.pacmensl_callbacks cimport PyTFunWrapper, PyConstrWrapper, PyPropWrapper
+from pypacmensl.callbacks.pacmensl_callbacks cimport *
 
 
 cdef class SensFspSolverMultiSinks:
