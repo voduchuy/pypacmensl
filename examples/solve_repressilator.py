@@ -1,5 +1,5 @@
 import mpi4py.MPI as MPI
-import pypacmensl.PACMENSL as pacmensl
+from pypacmensl.fsp_solver import FspSolverMultiSinks
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
@@ -66,7 +66,7 @@ sm = np.array([[1, 0, 0],
 tspan = np.linspace(0, 5, 5)
 
 # Create FSP solver object
-solver = pacmensl.FspSolverMultiSinks(MPI.COMM_WORLD)
+solver = FspSolverMultiSinks(MPI.COMM_WORLD)
 solver.SetModel(sm, t_fun, propensity)
 solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
 solver.SetInitialDist(x0, p0)
