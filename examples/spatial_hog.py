@@ -178,3 +178,5 @@ if rank is 0:
 
     fig.savefig('hog_snapshots.eps', format='eps')
     plt.show()
+
+solver.ClearState()
