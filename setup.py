@@ -1,4 +1,5 @@
 import os
+from sys import platform
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
 from glob import glob
@@ -16,11 +17,15 @@ metadata = {
         'maintainer_email': 'vdhuy91@gmail.com',
 }
 
+os.environ['CC'] = 'mpicc'
+os.environ['CXX'] = 'mpic++'
+
 extra_compile_args = ['-std=c++11', '-Wall', '-Wextra']
-# , '-stdlib=libc++', '-mmacosx-version-min=10.9']
-mpi_compile_args = os.popen("mpic++ --showme:compile").read().strip().split(' ')
-extra_compile_args += mpi_compile_args
-mpi_link_args = os.popen("mpic++ --showme:link").read().strip().split(' ')
+if platform == 'darwin':
+    extra_compile_args += ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+# mpi_compile_args = os.popen("mpic++ --showme:compile").read().strip().split(' ')
+# extra_compile_args += mpi_compile_args
+# mpi_link_args = os.popen("mpic++ --showme:link").read().strip().split(' ')
 
 print(extra_compile_args)
 
@@ -33,7 +38,7 @@ extensions = cythonize('**/*.pyx', language_level=3, include_path=pypacmensl_dir
 for ext in extensions:
     ext.language="c++"
     ext.libraries=['pacmensl', 'petsc']
-    ext.extra_link_args=mpi_link_args
+    # ext.extra_link_args=mpi_link_args
     ext.extra_compile_args = extra_compile_args
     ext.include_dirs = [os.environ['PETSC_DIR'] + '/include', np.get_include(),
                     "src/pypacmensl/include"]
