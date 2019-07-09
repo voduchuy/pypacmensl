@@ -1,4 +1,4 @@
-cdef extern from "PyCallbacksWrapper.h":
+cdef extern from "PyCallbacksWrapper.hpp":
     cdef cppclass PyPropWrapper:
         PyPropWrapper()
         PyPropWrapper(object)

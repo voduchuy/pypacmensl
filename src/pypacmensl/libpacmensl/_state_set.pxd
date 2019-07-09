@@ -1,7 +1,7 @@
 from mpi4py cimport libmpi
 cimport pypacmensl.arma.arma4cy as arma
 
-cdef extern from "PyCallbacksWrapper.h":
+cdef extern from "PyCallbacksWrapper.hpp":
     cdef cppclass PyConstrWrapper:
         PyConstrWrapper()
         PyConstrWrapper(object)
