@@ -15,3 +15,4 @@ cdef class SensFspSolverMultiSinks:
     cdef:
         _fsp.SensFspSolverMultiSinks* this_
         bool set_up_
+        object env_

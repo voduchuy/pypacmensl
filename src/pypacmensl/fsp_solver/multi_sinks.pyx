@@ -1,5 +1,5 @@
 # distutils: language = c++
-
+import pypacmensl.utils.environment as env
 import numpy as np
 
 cdef class FspSolverMultiSinks:
@@ -7,7 +7,8 @@ cdef class FspSolverMultiSinks:
         if comm is None:
             comm = mpi.Comm.COMM_WORLD.Dup()
         self.this_ = new _fsp.FspSolverMultiSinks(comm.ob_mpi)
-        set_up = False
+        self.env_ = [env._PACMENSL_GLOBAL_ENV]
+        self.set_up_ = False
 
     def __dealloc__(self):
         if self.this_ is not NULL:
@@ -137,10 +138,10 @@ cdef class FspSolverMultiSinks:
         :rtype:
         """
         self.this_[0].SetUp()
-        self.set_up = True
+        self.set_up_ = True
 
     def Solve(self, double t_final, double fsp_tol):
-        if self.set_up is not True:
+        if self.set_up_ is not True:
             self.SetUp()
 
         cdef cdd.DiscreteDistribution solution = cdd.DiscreteDistribution()
@@ -152,7 +153,7 @@ cdef class FspSolverMultiSinks:
         return solution
 
     def SolveTspan(self, tspan, double fsp_tol):
-        if self.set_up is not True:
+        if self.set_up_ is not True:
             self.SetUp()
         cdef int ntspan = tspan.size
         snapshots = []
@@ -174,4 +175,4 @@ cdef class FspSolverMultiSinks:
 
     def ClearState(self):
         self.this_[0].ClearState()
-        self.set_up = False
+        self.set_up_ = False

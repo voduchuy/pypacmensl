@@ -1,7 +1,7 @@
 # distutils: language = c++
 
 
-
+import pypacmensl.utils.environment as env
 import numpy as np
 
 cdef class SmFishSnapshot:
@@ -13,6 +13,8 @@ cdef class SmFishSnapshot:
 
         cdef arma.Mat[int] observ = arma.MakeIntMat(observations)
         self.this_ = new _smfish.SmFishSnapshot(observ)
+        self.env_ = []
+        self.env_.append(env._PACMENSL_GLOBAL_ENV)
 
     def __dealloc__(self):
         if self.this_ is not NULL:

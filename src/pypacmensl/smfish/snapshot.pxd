@@ -10,4 +10,6 @@ from pypacmensl.fsp_solver.distribution cimport DiscreteDistribution
 from pypacmensl.sensitivity.distribution cimport SensDiscreteDistribution
 
 cdef class SmFishSnapshot:
-    cdef _smfish.SmFishSnapshot* this_
+    cdef:
+        _smfish.SmFishSnapshot* this_
+        object env_

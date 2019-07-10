@@ -140,43 +140,43 @@ solver.SetUp()
 
 tspan = np.linspace(0, 60 * 15, 5)
 solution = solver.SolveTspan(tspan, 1.0e-2)
-
-ntspan = tspan.size
-marginals = []
-for i in range(0, 6):
-    for j in range(0, ntspan):
-        marginals.append(solution[j].Marginal(i))
-
-rank = MPI.COMM_WORLD.rank
-fig = plt.figure()
-fig.set_size_inches(10, 10)
-if rank is 0:
-    for i in range(4, 6):
-        for j in range(0, ntspan):
-            # marginals.append(solution.Marginal(i))
-            ax = fig.add_subplot(2, ntspan, (i - 4) * ntspan + 1 + j)
-            ax.plot(marginals[i * ntspan + j])
-            ax.fill_between(range(0, marginals[i * ntspan + j].size), 0, marginals[i * ntspan + j])
-            ax.set_xlim(left=0, auto=True)
-            ax.set_ylim(0, 1)
-            ax.grid(b=1)
-
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-            plt.setp(ax.get_xticklabels(), fontsize=10)
-            plt.setp(ax.get_yticklabels(), fontsize=10)
-
-            if j is 0:
-                ax.set_ylabel('Probability')
-            else:
-                ax.set_yticklabels([])
-
-            if i is 4:
-                ax.set_title('t = ' + str(tspan[j]) + ' min')
-
-            if i is 5:
-                ax.set_xlabel('Molecule count')
-
-    fig.savefig('hog_snapshots.eps', format='eps')
-    plt.show()
+#
+# ntspan = tspan.size
+# marginals = []
+# for i in range(0, 6):
+#     for j in range(0, ntspan):
+#         marginals.append(solution[j].Marginal(i))
+#
+# rank = MPI.COMM_WORLD.rank
+# fig = plt.figure()
+# fig.set_size_inches(10, 10)
+# if rank is 0:
+#     for i in range(4, 6):
+#         for j in range(0, ntspan):
+#             # marginals.append(solution.Marginal(i))
+#             ax = fig.add_subplot(2, ntspan, (i - 4) * ntspan + 1 + j)
+#             ax.plot(marginals[i * ntspan + j])
+#             ax.fill_between(range(0, marginals[i * ntspan + j].size), 0, marginals[i * ntspan + j])
+#             ax.set_xlim(left=0, auto=True)
+#             ax.set_ylim(0, 1)
+#             ax.grid(b=1)
+#
+#             ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+#             plt.setp(ax.get_xticklabels(), fontsize=10)
+#             plt.setp(ax.get_yticklabels(), fontsize=10)
+#
+#             if j is 0:
+#                 ax.set_ylabel('Probability')
+#             else:
+#                 ax.set_yticklabels([])
+#
+#             if i is 4:
+#                 ax.set_title('t = ' + str(tspan[j]) + ' min')
+#
+#             if i is 5:
+#                 ax.set_xlabel('Molecule count')
+#
+#     fig.savefig('hog_snapshots.eps', format='eps')
+#     plt.show()
 
 solver.ClearState()

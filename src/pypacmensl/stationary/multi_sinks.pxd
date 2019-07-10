@@ -16,3 +16,4 @@ cdef class StationaryFspSolverMultiSinks:
       cdef:
             _fsp.StationaryFspSolverMultiSinks* this_
             bool set_up
+            object env

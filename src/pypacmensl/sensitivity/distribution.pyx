@@ -1,10 +1,12 @@
 # distutils: language=c++
 
+import pypacmensl.utils.environment as env
 import numpy as np
 
 cdef class SensDiscreteDistribution:
     def __cinit__(self):
         self.this_ = new _sdd.SensDiscreteDistribution()
+        self.env_ = [env._PACMENSL_GLOBAL_ENV]
 
     def __dealloc__(self):
         if self.this_ is not NULL:

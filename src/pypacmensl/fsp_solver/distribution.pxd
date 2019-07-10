@@ -6,3 +6,4 @@ cimport pypacmensl.arma.arma4cy as arma
 cdef class DiscreteDistribution:
     cdef:
         _dd.DiscreteDistribution* this_
+        object env_

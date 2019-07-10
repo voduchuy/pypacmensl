@@ -1,5 +1,6 @@
 # distutils: language = c++
 import numpy as np
+import pypacmensl.utils.environment as environment
 
 cdef class StationaryFspSolverMultiSinks:
     def __cinit__(self, mpi.Comm comm = None):
@@ -7,10 +8,13 @@ cdef class StationaryFspSolverMultiSinks:
             comm = mpi.Comm.COMM_WORLD.Dup()
         self.this_ = new _fsp.StationaryFspSolverMultiSinks(comm.ob_mpi)
         self.set_up = False
+        self.env = []
+        self.env.append(environment._PACMENSL_GLOBAL_ENV)
 
     def __dealloc__(self):
         if self.this_ is not NULL:
             del self.this_
+            print('Python destructor for StationaryFspSolver called.')
 
     def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x):
         """

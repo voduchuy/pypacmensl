@@ -7,12 +7,15 @@ cimport numpy as cnp
 from pypacmensl.callbacks.pacmensl_callbacks cimport *
 from pypacmensl cimport libpacmensl
 cimport pypacmensl.arma.arma4cy as arma
+import pypacmensl.utils.environment as environment
 
 import numpy as np
 import mpi4py.MPI as mpi
 
 cdef class StateSetConstrained:
-    cdef libpacmensl.StateSetConstrained* this_
+    cdef:
+        libpacmensl.StateSetConstrained* this_
+        object env
 
     def __cinit__(self, MPI.Comm comm):
         cdef MPI.Comm comm_
@@ -22,6 +25,8 @@ cdef class StateSetConstrained:
             comm_ = mpi.COMM_WORLD.Dup()
 
         self.this_ = new libpacmensl.StateSetConstrained(comm_.ob_mpi)
+        self.env = []
+        self.env.append(environment._PACMENSL_GLOBAL_ENV)
 
     def __dealloc__(self):
         if (self.this_ != NULL):

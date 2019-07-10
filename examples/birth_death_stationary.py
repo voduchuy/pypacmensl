@@ -29,6 +29,7 @@ solver.SetInitialDist(x0, p0)
 solver.SetVerbosity(2)
 solver.SetUp()
 solution0 = solver.Solve(1.0e-10)
+solver.ClearState()
 
 p = solution0.Marginal(0)
 print(p)

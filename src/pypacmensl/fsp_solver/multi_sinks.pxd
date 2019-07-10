@@ -14,4 +14,5 @@ cimport pypacmensl.fsp_solver.distribution as cdd
 cdef class FspSolverMultiSinks:
     cdef:
         _fsp.FspSolverMultiSinks *this_
-        bool set_up
+        bool set_up_
+        object env_

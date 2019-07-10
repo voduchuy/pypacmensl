@@ -7,6 +7,7 @@ cimport pypacmensl.libpacmensl._sens_discrete_distribution as _sdd
 cdef class SensDiscreteDistribution:
     cdef:
         _sdd.SensDiscreteDistribution* this_
+        object env_
 
     cpdef GetStatesViewer(self)
 

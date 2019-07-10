@@ -1,5 +1,6 @@
 # distutils: language = c++
 import numpy as np
+import pypacmensl.utils.environment as env
 
 cdef class SensFspSolverMultiSinks:
     def __cinit__(self, mpi.Comm comm = None):
@@ -7,6 +8,7 @@ cdef class SensFspSolverMultiSinks:
             comm = mpi.Comm.COMM_WORLD.Dup()
         self.this_ = new _fsp.SensFspSolverMultiSinks(comm.ob_mpi)
         self.set_up_ = False
+        self.env_ = [env._PACMENSL_GLOBAL_ENV]
 
     def __dealloc__(self):
         if self.this_ is not NULL:
