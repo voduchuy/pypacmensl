@@ -1,0 +1,9 @@
+from mpi4py cimport MPI
+cimport numpy as np
+
+cdef class SSASolver:
+    cdef:
+        MPI.Comm comm_
+        object prop_t_
+        object prop_x_
+        np.ndarray stoich_matrix_
