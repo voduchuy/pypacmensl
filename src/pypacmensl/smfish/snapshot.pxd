@@ -9,6 +9,10 @@ cimport pypacmensl.arma.arma4cy as arma
 from pypacmensl.fsp_solver.distribution cimport DiscreteDistribution
 from pypacmensl.sensitivity.distribution cimport SensDiscreteDistribution
 
+ctypedef fused FusedDistribution:
+    DiscreteDistribution
+    SensDiscreteDistribution
+
 cdef class SmFishSnapshot:
     cdef:
         _smfish.SmFishSnapshot* this_

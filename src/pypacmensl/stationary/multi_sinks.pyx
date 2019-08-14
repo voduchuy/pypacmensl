@@ -14,7 +14,6 @@ cdef class StationaryFspSolverMultiSinks:
     def __dealloc__(self):
         if self.this_ is not NULL:
             del self.this_
-            print('Python destructor for StationaryFspSolver called.')
 
     def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x):
         """

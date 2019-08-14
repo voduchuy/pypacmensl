@@ -1,5 +1,6 @@
 from libcpp.vector cimport vector
 from mpi4py.libmpi cimport MPI_Comm
+from pypacmensl.libpacmensl._discrete_distribution cimport DiscreteDistribution
 from pypacmensl.libpacmensl._state_set cimport StateSetBase
 cimport pypacmensl.arma.arma4cy as arma
 
@@ -8,7 +9,7 @@ cdef extern from "petsc.h":
     cdef struct Vec
 
 cdef extern from "pacmensl.h" namespace "pacmensl":
-    cdef cppclass SensDiscreteDistribution:
+    cdef cppclass SensDiscreteDistribution(DiscreteDistribution):
         vector[Vec] dp_
 
         SensDiscreteDistribution()
@@ -23,11 +24,11 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         SensDiscreteDistribution & operator=(SensDiscreteDistribution & & dist)
 
-        void GetStateView(int & num_states, int & num_species, int *& states)
-
-        void GetProbView(int & num_states, double *& p)
-
-        void RestoreProbView(PetscReal* p)
+        # void GetStateView(int & num_states, int & num_species, int *& states)
+        #
+        # void GetProbView(int & num_states, double *& p)
+        #
+        # void RestoreProbView(PetscReal* p)
 
         int GetSensView(int, int num_states, double* p)
 

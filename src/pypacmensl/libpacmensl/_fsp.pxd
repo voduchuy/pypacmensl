@@ -59,6 +59,8 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         int SetOdesType( ODESolverType odes_type ) except +
 
+        int SetOdeTolerances(PetscReal rel_tol, PetscReal abs_tol) except +
+
         int SetUp( ) except +
 
         const StateSetBase *GetStateSet( ) except +

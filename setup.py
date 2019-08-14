@@ -33,7 +33,7 @@ pypacmensl_dirs = ['./src/pypacmensl']
 #
 pypacmensl_ext=[]
 
-pypacmensl_subpackages=['callbacks', 'arma', 'fsp_solver', 'sensitivity', 'smfish', 'state_set', 'stationary', 'utils']
+pypacmensl_subpackages=['callbacks', 'arma', 'fsp_solver', 'sensitivity', 'smfish', 'state_set', 'stationary', 'utils', 'ssa']
 
 for folder in pypacmensl_subpackages:
     extensions = cythonize('src/pypacmensl/'+ folder + '/*.pyx', language_level=3, include_path=pypacmensl_dirs)

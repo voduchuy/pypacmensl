@@ -1,6 +1,7 @@
 import numpy as np
 cimport numpy as cnp
 
+from pypacmensl.fsp_solver.distribution cimport DiscreteDistribution
 cimport pypacmensl.arma.arma4cy as arma
 cimport pypacmensl.libpacmensl._sens_discrete_distribution as _sdd
 

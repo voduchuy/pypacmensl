@@ -1,8 +1,10 @@
-import pypacmensl.PACMENSL as pacmensl
 import mpi4py.MPI as mpi
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
+from pypacmensl.ssa.ssa import SSASolver
+from pypacmensl.smfish.snapshot import SmFishSnapshot
+from pypacmensl.fsp_solver import FspSolverMultiSinks
 
 stoich_mat = np.array([ [-1, 1, 0],
                         [1, -1, 0],
@@ -31,48 +33,34 @@ def t_fun(t, out):
 n_t = 4
 tspan = np.linspace(0, 100, n_t)
 
-solver = pacmensl.FspSolverMultiSinks(mpi.COMM_WORLD)
+ssa = SSASolver()
+ssa.SetModel(stoich_mat, t_fun, propensity)
+observations = ssa.Solve(100, x0, 10000)
+
+data = SmFishSnapshot(observations[:,2])
+
+xdat = data.GetStates()
+pdat = data.GetFrequencies()/10000
+
+indx = np.argsort(xdat, axis=0)
+xdat = xdat[indx[:], 0]
+pdat = pdat[indx[:]]
+
+
+
+solver = FspSolverMultiSinks(mpi.COMM_WORLD)
 solver.SetModel(stoich_mat, t_fun, propensity)
 solver.SetFspShape(None, constr_init)
 solver.SetInitialDist(x0, p0)
 solver.SetVerbosity(2)
 solver.SetUp()
-solutions = solver.SolveTspan(tspan, 1.0e-4)
+solution = solver.Solve(100.0, 1.0e-4)
 
 
 marginals = []
 for i in range(0, 3):
-    for j in range(0, n_t):
-        marginals.append(solutions[j].Marginal(i))
+    marginals.append(solution.Marginal(i))
 
-rank = mpi.COMM_WORLD.rank
-fig = plt.figure()
-fig.set_size_inches(10, 10)
-if rank is 0:
-    for i in range(0, 3):
-        for j in range(0, n_t):
-            # marginals.append(solution.Marginal(i))
-            ax = fig.add_subplot(3, n_t, i * n_t + 1 + j)
-            ax.plot(marginals[i * n_t + j])
-            ax.set_ylim(0, 1)
-            ax.grid(b=1)
-
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-            plt.setp(ax.get_xticklabels(), fontsize=10)
-            plt.setp(ax.get_yticklabels(), fontsize=10)
-
-            if j is 0:
-                ax.set_ylabel('Probability')
-            # else:
-            #     ax.set_yticklabels([])
-
-            if i is 0:
-                ax.set_title('t = ' + str(tspan[j]) + ' min')
-
-            if i is 2:
-                ax.set_xlabel('Molecule count')
-            # else:
-            #     ax.set_xticklabels([])
-
-    fig.savefig('const_ge_snapshots.eps', format='eps')
-    plt.show()
+plt.plot(xdat, pdat)
+plt.plot(marginals[2])
+plt.show()

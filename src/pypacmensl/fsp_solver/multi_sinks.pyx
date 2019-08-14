@@ -43,7 +43,7 @@ cdef class FspSolverMultiSinks:
                                                               stoich_matrix.shape[0], 0, 1)
 
         cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_t_fun_obj,
-                                              call_py_prop_obj, <void*>propensity_t, <void*> propensity_x)
+                                            call_py_prop_obj, <void*> propensity_t, <void*> propensity_x)
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -93,7 +93,7 @@ cdef class FspSolverMultiSinks:
         :rtype:
         """
         if constr_fun is not None:
-            self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*>constr_fun)
+            self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*> constr_fun)
 
         if constr_bound.dtype is not np.intc:
             constr_bound = constr_bound.astype(np.intc)
@@ -109,8 +109,8 @@ cdef class FspSolverMultiSinks:
         exp_factors = exp_factors.astype(np.double)
         exp_factors = np.ascontiguousarray(exp_factors)
         cdef arma.Row[_fsp.PetscReal] exp_factors_arma = arma.Row[_fsp.PetscReal](
-            <double*> exp_factors.data,
-            exp_factors.size, 0, 1)
+                <double*> exp_factors.data,
+                exp_factors.size, 0, 1)
         self.this_[0].SetExpansionFactors(exp_factors_arma)
 
     def SetVerbosity(self, int level):
@@ -130,6 +130,20 @@ cdef class FspSolverMultiSinks:
         cdef int ierr = self.this_[0].SetLoadBalancingMethod(cmethod)
         assert (ierr == 0)
 
+    def SetOdeTolerances(self, double rel_tol = 1.0e-6, double abs_tol = 1.0e-14):
+        """
+        Set error tolerances for the ODE integrator.
+
+        Parameters
+        ==========
+
+        rel_tol : relative tolerance
+
+        abs_tol : absolute tolerance
+
+        """
+        self.this_[0].SetOdeTolerances(rel_tol, abs_tol)
+
     def SetUp(self):
         """
         Allocate resources for the FSP solver. This method is called implicitly within Solve() and SolveTspan() so normal
@@ -140,7 +154,7 @@ cdef class FspSolverMultiSinks:
         self.this_[0].SetUp()
         self.set_up_ = True
 
-    def Solve(self, double t_final, double fsp_tol):
+    def Solve(self, double t_final, double fsp_tol = -1.0):
         if self.set_up_ is not True:
             self.SetUp()
 
@@ -152,7 +166,7 @@ cdef class FspSolverMultiSinks:
             return None
         return solution
 
-    def SolveTspan(self, tspan, double fsp_tol):
+    def SolveTspan(self, tspan, double fsp_tol = -1.0):
         if self.set_up_ is not True:
             self.SetUp()
         cdef int ntspan = tspan.size

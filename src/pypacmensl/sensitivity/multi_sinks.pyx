@@ -14,7 +14,8 @@ cdef class SensFspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x, d_propensity_t, d_propensity_x, cnp.ndarray sparsity_patterns = None):
+    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x, d_propensity_t, d_propensity_x,
+                 cnp.ndarray sparsity_patterns = None):
         """
         def SetModel(self, stoich_matrix, t_fun, propensity)
 
@@ -55,19 +56,12 @@ cdef class SensFspSolverMultiSinks:
             stoich_matrix = stoich_matrix.astype(np.intc)
         if not stoich_matrix.flags['C_CONTIGUOUS']:
             stoich_matrix = np.ascontiguousarray(stoich_matrix)
+        if sparsity_patterns.dtype is not np.intc:
+            sparsity_patterns = sparsity_patterns.astype(np.intc)
 
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
 
-        cdef vector[int] ic
-        cdef vector[int] irow
-        irow.push_back(0)
-        if sparsity_patterns is not None:
-            for i in range(0, sparsity_patterns.shape[0]):
-                for j in range(0, sparsity_patterns.shape[1]):
-                    if sparsity_patterns[i][j] is 1:
-                        ic.push_back(j)
-                    irow.push_back(ic.size())
 
         cdef _fsp.SensModel model_
         model_.stoichiometry_matrix_ = stoich_matrix_arma
@@ -76,21 +70,31 @@ cdef class SensFspSolverMultiSinks:
         model_.prop_t_args_ = <void*> propensity_t
         model_.prop_x_args_ = <void*> propensity_x
 
-
         model_.num_parameters_ = model_.dprop_x_.size()
 
         model_.dprop_t_.reserve(len(d_propensity_t))
         model_.dprop_t_args_.reserve(model_.num_parameters_)
         for f in d_propensity_t:
             model_.dprop_t_.push_back(call_py_t_fun_obj)
-            model_.dprop_t_args_.push_back(<void*>f)
+            model_.dprop_t_args_.push_back(<void*> f)
 
         model_.dprop_x_.reserve(model_.num_parameters_)
         model_.dprop_x_args_.reserve(model_.num_parameters_)
         for f in d_propensity_x:
             model_.dprop_x_.push_back(call_py_prop_obj)
-            model_.dprop_x_args_.push_back(<void*>f)
+            model_.dprop_x_args_.push_back(<void*> f)
 
+        cdef vector[int] ic
+        cdef vector[int] irow
+        irow.push_back(0)
+        if sparsity_patterns is not None:
+            for i in range(0, sparsity_patterns.shape[0]):
+                for j in range(0, sparsity_patterns.shape[1]):
+                    if sparsity_patterns[i, j] == 1:
+                        ic.push_back(j)
+                irow.push_back(ic.size())
+        model_.dpropensity_ic_ = ic
+        model_.dpropensity_rowptr_ = irow
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -147,7 +151,7 @@ cdef class SensFspSolverMultiSinks:
         :rtype:
         """
         if constr_fun is not None:
-            self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*>constr_fun)
+            self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*> constr_fun)
 
         if constr_bound.dtype is not np.intc:
             constr_bound = constr_bound.astype(np.intc)
@@ -163,8 +167,8 @@ cdef class SensFspSolverMultiSinks:
         exp_factors = exp_factors.astype(np.double)
         exp_factors = np.ascontiguousarray(exp_factors)
         cdef arma.Row[_fsp.PetscReal] exp_factors_arma = arma.Row[_fsp.PetscReal](
-            <double*> exp_factors.data,
-            exp_factors.size, 0, 1)
+                <double*> exp_factors.data,
+                exp_factors.size, 0, 1)
         self.this_[0].SetExpansionFactors(exp_factors_arma)
 
     def SetVerbosity(self, int level):

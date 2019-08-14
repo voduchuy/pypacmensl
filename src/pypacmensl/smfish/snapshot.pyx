@@ -20,7 +20,7 @@ cdef class SmFishSnapshot:
         if self.this_ is not NULL:
             del self.this_
 
-    def LogLikelihood(self, DiscreteDistribution dist, species=None, use_log2 = False):
+    def LogLikelihood(self, FusedDistribution dist, species=None, use_log2 = False):
         cdef bool cuse_log_2
         cdef arma.Col[int] measured_species
         if use_log2 is True:
