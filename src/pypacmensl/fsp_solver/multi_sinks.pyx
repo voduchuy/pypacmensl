@@ -183,7 +183,7 @@ cdef class FspSolverMultiSinks:
     def SetOdeSolver(self, solver="CVODE"):
         solver = solver.lower()
         if solver == 'cvode':
-            self.this_[0].SetOdesType(_fsp.CVODE_BDF)
+            self.this_[0].SetOdesType(_fsp.CVODE)
         else:
             self.this_[0].SetOdesType(_fsp.KRYLOV)
 

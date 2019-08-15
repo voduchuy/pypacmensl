@@ -13,7 +13,8 @@ ctypedef void* void_ptr
 cdef extern from "pacmensl.h" namespace "pacmensl":
     ctypedef enum ODESolverType:
         KRYLOV,
-        CVODE_BDF
+        CVODE,
+        PETSC
 
     cdef cppclass Model:
         arma.Mat[int] stoichiometry_matrix_
