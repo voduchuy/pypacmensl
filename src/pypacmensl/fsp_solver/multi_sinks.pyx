@@ -154,25 +154,25 @@ cdef class FspSolverMultiSinks:
         self.this_[0].SetUp()
         self.set_up_ = True
 
-    def Solve(self, double t_final, double fsp_tol = -1.0):
+    def Solve(self, double t_final, double fsp_tol = -1.0, double t_init = 0.0,):
         if self.set_up_ is not True:
             self.SetUp()
 
         cdef cdd.DiscreteDistribution solution = cdd.DiscreteDistribution()
         try:
-            solution.this_[0] = self.this_[0].Solve(t_final, fsp_tol)
+            solution.this_[0] = self.this_[0].Solve(t_final, t_init, fsp_tol)
         except RuntimeError:
             print("Runtime error!")
             return None
         return solution
 
-    def SolveTspan(self, tspan, double fsp_tol = -1.0):
+    def SolveTspan(self, tspan, double fsp_tol = -1.0, double t_init = 0.0 ):
         if self.set_up_ is not True:
             self.SetUp()
         cdef int ntspan = tspan.size
         snapshots = []
         cdef vector[_dd.DiscreteDistribution] snapshots_c
-        snapshots_c = self.this_[0].SolveTspan(tspan, fsp_tol)
+        snapshots_c = self.this_[0].SolveTspan(tspan, t_init, fsp_tol)
         cdef cdd.DiscreteDistribution solution
         for i in range(0, ntspan):
             solution = cdd.DiscreteDistribution()
