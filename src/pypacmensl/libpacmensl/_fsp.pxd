@@ -66,9 +66,9 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         const StateSetBase *GetStateSet( ) except +
 
-        DiscreteDistribution Solve( PetscReal t_final, PetscReal t_init, PetscReal fsp_tol ) except +
+        DiscreteDistribution Solve( PetscReal t_final,  PetscReal fsp_tol, PetscReal t_init ) except +
 
-        vector[DiscreteDistribution] SolveTspan( vector[PetscReal] tspan, PetscReal t_init, PetscReal fsp_tol ) except +
+        vector[DiscreteDistribution] SolveTspan( vector[PetscReal] tspan, PetscReal fsp_tol, PetscReal t_init ) except +
 
         int ClearState( ) except +
 

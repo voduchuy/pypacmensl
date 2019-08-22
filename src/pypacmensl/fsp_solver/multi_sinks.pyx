@@ -160,7 +160,7 @@ cdef class FspSolverMultiSinks:
 
         cdef cdd.DiscreteDistribution solution = cdd.DiscreteDistribution()
         try:
-            solution.this_[0] = self.this_[0].Solve(t_final, t_init, fsp_tol)
+            solution.this_[0] = self.this_[0].Solve(t_final, fsp_tol, t_init)
         except RuntimeError:
             print("Runtime error!")
             return None
@@ -172,7 +172,7 @@ cdef class FspSolverMultiSinks:
         cdef int ntspan = tspan.size
         snapshots = []
         cdef vector[_dd.DiscreteDistribution] snapshots_c
-        snapshots_c = self.this_[0].SolveTspan(tspan, t_init, fsp_tol)
+        snapshots_c = self.this_[0].SolveTspan(tspan, fsp_tol, t_init)
         cdef cdd.DiscreteDistribution solution
         for i in range(0, ntspan):
             solution = cdd.DiscreteDistribution()
