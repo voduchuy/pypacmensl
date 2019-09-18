@@ -161,7 +161,7 @@ cdef class FspSolverMultiSinks:
         cdef cdd.DiscreteDistribution solution = cdd.DiscreteDistribution()
         try:
             solution.this_[0] = self.this_[0].Solve(t_final, fsp_tol, t_init)
-        except RuntimeError:
+        except:
             print("Runtime error!")
             return None
         return solution
@@ -172,7 +172,11 @@ cdef class FspSolverMultiSinks:
         cdef int ntspan = tspan.size
         snapshots = []
         cdef vector[_dd.DiscreteDistribution] snapshots_c
-        snapshots_c = self.this_[0].SolveTspan(tspan, fsp_tol, t_init)
+        try:
+            snapshots_c = self.this_[0].SolveTspan(tspan, fsp_tol, t_init)
+        except:
+            print("Runtime error!")
+            return None
         cdef cdd.DiscreteDistribution solution
         for i in range(0, ntspan):
             solution = cdd.DiscreteDistribution()
@@ -181,6 +185,14 @@ cdef class FspSolverMultiSinks:
         return snapshots
 
     def SetOdeSolver(self, solver="CVODE"):
+        """
+        Set the ODE solver for the truncated CME problem. Currently we support the Krylov integrator for time invariant propensities
+        and Sundials' CVODES integrator for time-varying propensities.
+        :param solver: either "CVODE" or "KRYLOV".
+        :type solver: string.
+        :return: None.
+        :rtype: None.
+        """
         solver = solver.lower()
         if solver == 'cvode':
             self.this_[0].SetOdesType(_fsp.CVODE)

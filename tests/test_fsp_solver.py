@@ -60,7 +60,7 @@ class TestFspSolver(unittest.TestCase):
         X0 = np.array([[0,0]])
         p0 = np.array([1.0])
         solver.SetInitialDist(X0, p0)
-        solution = solver.Solve(10.0, 1.0e-4)
+        solution = solver.Solve(10.0, 1.0E-6)
         prob = np.asarray(solution.GetProbViewer())
         self.assertAlmostEqual(prob.sum(), 1.0, 4)
 
@@ -71,9 +71,11 @@ class TestFspSolver(unittest.TestCase):
         X0 = np.array([[0,0]])
         p0 = np.array([1.0])
         solver.SetInitialDist(X0, p0)
-        solution = solver.Solve(10.0, 1.0e-4)
+        solution = solver.Solve(10.0, 1.0E-6)
         prob = np.asarray(solution.GetProbViewer())
-        self.assertAlmostEqual(prob.sum(), 1.0, 4)
+        psum1 = prob.sum()
+        psum = mpi.COMM_WORLD.allreduce(psum1)
+        self.assertAlmostEqual(psum, 1.0, 4)
 
     def test_solve_parallel_krylov(self):
         solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
@@ -83,9 +85,11 @@ class TestFspSolver(unittest.TestCase):
         p0 = np.array([1.0])
         solver.SetInitialDist(X0, p0)
         solver.SetOdeSolver("Krylov")
-        solution = solver.Solve(10.0, 1.0e-4)
+        solution = solver.Solve(10.0, 1.0e-6)
         prob = np.asarray(solution.GetProbViewer())
-        self.assertAlmostEqual(prob.sum(), 1.0, 4)
+        psum1 = prob.sum()
+        psum = mpi.COMM_WORLD.allreduce(psum1)
+        self.assertAlmostEqual(psum, 1.0, 4)
 
     def test_solve_parallel_twice(self):
         solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
@@ -95,12 +99,14 @@ class TestFspSolver(unittest.TestCase):
         p0 = np.array([1.0])
         solver.SetInitialDist(X0, p0)
         solver.SetOdeSolver("Krylov")
-        solution = solver.Solve(10.0, 1.0e-4)
+        solution = solver.Solve(10.0, 1.0e-6)
         solver.ClearState()
         solver.SetInitialDist(X0, p0)
         solution = solver.Solve(10.0, 1.0e-4)
         prob = np.asarray(solution.GetProbViewer())
-        self.assertAlmostEqual(prob.sum(), 1.0, 4)
+        psum1 = prob.sum()
+        psum = mpi.COMM_WORLD.allreduce(psum1)
+        self.assertAlmostEqual(psum, 1.0, 4)
 
 if __name__ == '__main__':
     unittest.main()
