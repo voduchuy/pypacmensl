@@ -21,9 +21,9 @@ os.environ['CC'] = 'mpicc'
 os.environ['CXX'] = 'mpic++'
 extra_compile_args = ['-std=c++11', '-Wall', '-Wextra']
 extra_links = []
-if platform == 'darwin':
-    extra_compile_args += ['-stdlib=libc++']
-    extra_links += ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+# if platform == 'darwin':
+#     # extra_compile_args += ['-stdlib=libc++']
+#     # extra_links += ['-stdlib=libc++', '-mmacosx-version-min=10.9']
 
 
 # %%

@@ -20,6 +20,10 @@ cdef class SSASolver:
         self.stoich_matrix_ = stoich_matrix
 
     def Solve(self, double t_final, np.ndarray x0, int num_samples = 1, send_to_root=False):
+        """
+        X = Solve(self, double t_final, np.ndarray x0, int num_samples = 1, send_to_root=False)
+        :return X : numpy array of sampled states at time t_final, each row is a state.
+        """
         cdef:
             # int rank, num_procs, num_samples_local
             int num_species, num_reactions
@@ -35,7 +39,7 @@ cdef class SSASolver:
         num_samples_local = (num_samples // num_procs) + (rank < num_samples % num_procs)
 
         if x0.ndim == 1:
-            num_species = x0.size()
+            num_species = len(x0)
         elif x0.ndim == 2:
             num_species = x0.shape[1]
         num_reactions = self.stoich_matrix_.shape[0]

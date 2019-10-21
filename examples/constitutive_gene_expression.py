@@ -1,4 +1,4 @@
-import pypacmensl.PACMENSL as pacmensl
+from pypacmensl.fsp_solver import FspSolverMultiSinks
 import mpi4py.MPI as mpi
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ def t_fun(t, out):
 n_t = 4
 tspan = np.linspace(0, 100, n_t)
 
-solver = pacmensl.FspSolverMultiSinks(mpi.COMM_WORLD)
+solver = FspSolverMultiSinks(mpi.COMM_WORLD)
 solver.SetModel(stoich_mat, t_fun, propensity)
 solver.SetFspShape(None, constr_init)
 solver.SetInitialDist(x0, p0)

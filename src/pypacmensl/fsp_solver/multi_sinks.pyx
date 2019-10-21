@@ -104,7 +104,7 @@ cdef class FspSolverMultiSinks:
 
         if exp_factors is None:
             exp_factors = np.empty(constr_bound.size, dtype=np.double)
-            exp_factors.fill(0.25)
+            exp_factors.fill(0.2)
 
         exp_factors = exp_factors.astype(np.double)
         exp_factors = np.ascontiguousarray(exp_factors)
