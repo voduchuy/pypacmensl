@@ -62,6 +62,12 @@ cdef class SensFspSolverMultiSinks:
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
 
+        cdef vector[int] tv_react
+        prop_t_ptr = <void*> propensity_t
+        for i in range(0, stoich_matrix.shape[0]):
+            tv_react.push_back(i)
+
+
 
         cdef _fsp.SensModel model_
         model_.stoichiometry_matrix_ = stoich_matrix_arma
@@ -95,6 +101,7 @@ cdef class SensFspSolverMultiSinks:
                 irow.push_back(ic.size())
         model_.dpropensity_ic_ = ic
         model_.dpropensity_rowptr_ = irow
+        model_.tv_reactions_ = tv_react
 
         ierr = self.this_[0].SetModel(model_)
 

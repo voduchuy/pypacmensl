@@ -1,4 +1,5 @@
 from libcpp.vector cimport *
+from libcpp.string cimport *
 from mpi4py.libmpi cimport MPI_Comm
 
 from pypacmensl.arma cimport arma4cy as arma
@@ -14,7 +15,8 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
     ctypedef enum ODESolverType:
         KRYLOV,
         CVODE,
-        PETSC
+        PETSC,
+        EPIC
 
     cdef cppclass Model:
         arma.Mat[int] stoichiometry_matrix_
@@ -22,10 +24,11 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         PropXFun prop_x_
         void* prop_t_args_
         void* prop_x_args_
+        vector[int] tv_reactions_
 
         Model(arma.Mat[int] stoichiometry_matrix, PropTFun, PropXFun) except +
 
-        Model(arma.Mat[int] stoichiometry_matrix, PropTFun, PropXFun, void*, void*) except +
+        Model(arma.Mat[int] stoichiometry_matrix, PropTFun, PropXFun, void*, void*, vector[int]) except +
 
         Model();
 
@@ -52,6 +55,8 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         int SetInitialDistribution( arma.Mat[int] _init_states, arma.Col[PetscReal] _init_probs ) except +
 
+        int SetInitialDistribution(DiscreteDistribution init_dist) except +
+
         int SetLogging( PetscBool logging ) except +
 
         int SetFromOptions( ) except +
@@ -59,6 +64,8 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         int SetLoadBalancingMethod( PartitioningType part_type ) except +
 
         int SetOdesType( ODESolverType odes_type ) except +
+
+        int SetOdesPetscType(string ts_type) except +
 
         int SetOdeTolerances(PetscReal rel_tol, PetscReal abs_tol) except +
 
@@ -77,6 +84,7 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         int                   num_reactions_
         int                   num_parameters_
         arma.Mat[int]         stoichiometry_matrix_
+        vector[int] tv_reactions_
         PropTFun         prop_t_
         PropXFun         prop_x_
         vector[PropXFun]  dprop_x_
@@ -91,12 +99,14 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         SensModel()
 
         SensModel(arma.Mat[int] stoichiometry_matrix,
+                  vector[int] tv_reactions,
                   PropTFun & prop_t,
                   PropXFun & prop_x,
                   vector[PropTFun] & dprop_t,
                   vector[PropXFun] & dprop_x)
 
         SensModel(arma.Mat[int] stoichiometry_matrix,
+                  vector[int] tv_reactions,
                   PropTFun & prop_t,
                   PropXFun & prop_x,
                   vector[PropTFun] & dprop_t,

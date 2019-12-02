@@ -7,3 +7,9 @@ cdef class SSASolver:
         object prop_t_
         object prop_x_
         np.ndarray stoich_matrix_
+
+cdef class SSATrajectory:
+    cdef:
+        object prop_t_
+        object prop_x_
+        np.ndarray stoich_matrix_

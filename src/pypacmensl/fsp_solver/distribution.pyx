@@ -44,3 +44,12 @@ cdef class DiscreteDistribution:
         cdef double[::1] marginal_view = <double[:marginal.n_elem]> marginal_ptr
         return np.copy(np.asarray(marginal_view))
 
+    def WeightedAverage(self, nout, weightfun):
+        fout = np.zeros((nout, ), dtype=np.double)
+        fout = np.ascontiguousarray(fout)
+        cdef double[::1] foutview = fout
+        cdef int ierr = self.this_[0].WeightedAverage(nout, &foutview[0], call_py_weight_fun, <void*> weightfun)
+        if ierr != 0:
+            raise RuntimeError('An error was encountered during the call to the weight function.')
+        return fout
+

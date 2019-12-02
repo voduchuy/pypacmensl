@@ -100,9 +100,9 @@ cdef class StateSetConstrained:
 
         cdef int[:,::1] states_view = states
 
-        # self.this_[0].CopyStatesOnProc(num_states, &states_view[0,0])
-        # if return_fortran_array:
-        #     states = np.asfortranarray(states)
+        self.this_[0].CopyStatesOnProc(num_states, &states_view[0,0])
+        if return_fortran_array:
+            states = np.asfortranarray(states)
         return states
 
     def SetLBMethod(self, method="Graph"):

@@ -1,5 +1,6 @@
 from libcpp cimport bool
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 cimport mpi4py.MPI as mpi
 cimport numpy as cnp
 

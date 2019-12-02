@@ -101,3 +101,12 @@ cdef class SensDiscreteDistribution:
 
         cdef _sdd.PetscReal[::, ::1] fim_view = <_sdd.PetscReal[:fim.n_cols, :fim.n_rows]> fim.memptr()
         return np.copy(np.asarray(fim_view))
+
+    def WeightedAverage(self, iS, nout, weightfun):
+        fout = np.zeros((nout, ), dtype=np.double)
+        fout = np.ascontiguousarray(fout)
+        cdef double[::1] foutview = fout
+        cdef int ierr = self.this_[0].WeightedAverage(iS, nout, &foutview[0], call_py_weight_fun, <void*> weightfun)
+        if ierr != 0:
+            raise RuntimeError('An error was encountered during the call to the weight function.')
+        return fout

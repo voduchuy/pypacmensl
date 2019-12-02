@@ -1,11 +1,10 @@
 # distutils: language = c++
 import pypacmensl.utils.environment as env
 import numpy as np
+import mpi4py.MPI as mpi
 
 cdef class FspSolverMultiSinks:
-    def __cinit__(self, mpi.Comm comm = None):
-        if comm is None:
-            comm = mpi.Comm.COMM_WORLD.Dup()
+    def __cinit__(self, mpi.Comm comm = mpi.COMM_WORLD):
         self.this_ = new _fsp.FspSolverMultiSinks(comm.ob_mpi)
         self.env_ = [env._PACMENSL_GLOBAL_ENV]
         self.set_up_ = False
@@ -14,24 +13,30 @@ cdef class FspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x):
+    def SetModel(self, cnp.ndarray stoich_matrix, propensity_x, propensity_t = None, tv_reactions = None):
         """
-        def SetModel(self, stoich_matrix, t_fun, propensity)
+        def SetModel(self, stoich_matrix, propensity_x, propensity_t, tv_reactions)
 
         Set the stochastic chemical kinetics model to be solved.
 
         :param stoich_matrix: stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
-
-        :param propensity_t:
-                callable object for computing the time-dependent coefficients. It must have signature
-                        def propensity_t( t, out )
-                where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
 
         :param propensity_x:
                 callable object representing the time-independent factors of the propensities. It must have signature
                         def propensity_x( i_reaction, states, out )
                 where i_reaction is the reaction index, states[:, :] an array where each row is an input state, and out[:] is
                 the output array to be written to.
+
+        :param propensity_t:
+                (Optional) callable object for computing the time-dependent coefficients. It must have signature
+                        def propensity_t( t, out )
+                where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
+                This is only needed when solving a model with time-varying propensities, in which case you also need to
+                input tv_reactions. If not specified or set to None, the model is assumed to have time-invariant propensities.
+
+        :param tv_reactions:
+                (Optional) array-like object that stores the indices of the reactions whose propensities are time-varying.
+                If not specified or set to None, but with propensity_t specified, we assume that all reaction propensities are time-varying.
         """
         cdef int ierr
         if stoich_matrix.dtype is not np.intc:
@@ -42,8 +47,22 @@ cdef class FspSolverMultiSinks:
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
 
+        cdef void* prop_t_ptr
+        cdef vector[int] tv_react
+
+        if propensity_t is None:
+            prop_t_ptr = NULL
+        else:
+            prop_t_ptr = <void*> propensity_t
+            if tv_reactions is None:
+                for i in range(0, stoich_matrix.shape[0]):
+                    tv_react.push_back(i)
+            else:
+                for i in range(0, len(tv_reactions)):
+                    tv_react.push_back(tv_reactions[i])
+
         cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_t_fun_obj,
-                                            call_py_prop_obj, <void*> propensity_t, <void*> propensity_x)
+                                            call_py_prop_obj, prop_t_ptr, <void*> propensity_x, tv_react)
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -75,6 +94,11 @@ cdef class FspSolverMultiSinks:
         cdef arma.Mat[int] X0_arma = arma.Mat[int](<int*> X0.data, X0.shape[1], X0.shape[0], 1, 1)
         cdef arma.Col[_fsp.PetscReal] p0_arma = arma.Col[_fsp.PetscReal](<double*> p0.data, p0.size, 1, 1)
         ierr = self.this_[0].SetInitialDistribution(X0_arma, p0_arma)
+        assert (ierr == 0)
+
+    def SetInitialDist2(self, cdd.DiscreteDistribution dist):
+        cdef int ierr = 0
+        ierr = self.this_[0].SetInitialDistribution(dist.this_[0])
         assert (ierr == 0)
 
     def SetFspShape(self, constr_fun, cnp.ndarray constr_bound, cnp.ndarray exp_factors = None):
@@ -161,7 +185,7 @@ cdef class FspSolverMultiSinks:
         cdef cdd.DiscreteDistribution solution = cdd.DiscreteDistribution()
         try:
             solution.this_[0] = self.this_[0].Solve(t_final, fsp_tol, t_init)
-        except:
+        except RuntimeError:
             print("Runtime error!")
             return None
         return solution
@@ -174,7 +198,7 @@ cdef class FspSolverMultiSinks:
         cdef vector[_dd.DiscreteDistribution] snapshots_c
         try:
             snapshots_c = self.this_[0].SolveTspan(tspan, fsp_tol, t_init)
-        except:
+        except RuntimeError:
             print("Runtime error!")
             return None
         cdef cdd.DiscreteDistribution solution
@@ -188,7 +212,7 @@ cdef class FspSolverMultiSinks:
         """
         Set the ODE solver for the truncated CME problem. Currently we support the Krylov integrator for time invariant propensities
         and Sundials' CVODES integrator for time-varying propensities.
-        :param solver: either "CVODE" or "KRYLOV".
+        :param solver: a string in {"CVODE","KRYLOV","EPIC"}.
         :type solver: string.
         :return: None.
         :rtype: None.
@@ -196,8 +220,24 @@ cdef class FspSolverMultiSinks:
         solver = solver.lower()
         if solver == 'cvode':
             self.this_[0].SetOdesType(_fsp.CVODE)
+        elif solver == 'epic':
+            self.this_[0].SetOdesType(_fsp.EPIC)
+        elif solver == 'petsc':
+            self.this_[0].SetOdesType(_fsp.PETSC)
         else:
             self.this_[0].SetOdesType(_fsp.KRYLOV)
+
+    def SetPetscTSType(self, type='rosw'):
+        """
+        Set the type of integrator when using PETSC's TS module.
+        :param type: (string) name of the type, must be a name recognizable to PETSc.
+        :type type:
+        :return:
+        :rtype:
+        """
+        type = type.lower()
+        cdef string type_str = type.encode('ASCII')
+        self.this_[0].SetOdesPetscType(type_str)
 
     def ClearState(self):
         self.this_[0].ClearState()

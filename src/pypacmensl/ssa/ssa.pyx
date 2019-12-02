@@ -67,6 +67,8 @@ cdef class SSASolver:
                     props[r] = tcoef[r] * tmp_array[0]
                     asum = asum + props[r]
 
+                if asum == 0.0:
+                    break
                 # Decide time step
                 tau = log(1.0 / r1) / asum
 
@@ -110,3 +112,79 @@ cdef class SSASolver:
         else:
             outputs = outputs_local
         return outputs
+
+cdef class SSATrajectory:
+    def __cinit__(self):
+        self.prop_t_ = None
+        self.prop_x_ = None
+        self.stoich_matrix_ = np.empty((0, 0))
+
+    def SetModel(self, np.ndarray stoich_matrix, propensity_t, propensity_x):
+            self.prop_t_ = propensity_t
+            self.prop_x_ = propensity_x
+            self.stoich_matrix_ = stoich_matrix
+
+    def Solve(self, np.ndarray tspan, np.ndarray x0):
+        """
+        [X, T] = Solve(self, double t_final, np.ndarray x0, int num_samples = 1, send_to_root=False)
+        :return X : numpy array of sampled states at time t_final, each row is a state.
+        """
+        cdef:
+            # int rank, num_procs, num_samples_local
+            int num_species, num_reactions, num_steps
+            int reaction
+            double t_now, r1, r2, tau, t_final
+            double asum, tmp
+            np.ndarray xtmp
+            np.ndarray props, tcoef
+
+        if x0.ndim == 1:
+            num_species = len(x0)
+        elif x0.ndim == 2:
+            num_species = x0.shape[1]
+        num_reactions = self.stoich_matrix_.shape[0]
+
+        t_final = tspan[-1]
+        xtmp = np.zeros((1, num_species), dtype=np.intc)
+        tcoef = np.zeros((num_reactions,))
+        props = np.zeros((num_reactions,))
+        tmp_array = np.zeros((1,))
+        num_steps = len(tspan)
+
+        X = np.zeros((num_steps, num_species), dtype=np.intc)
+
+        X[0, :] = x0
+        t_now = 0.0
+        xtmp = np.copy(x0)
+        while t_now < t_final:
+            r1 = random_sample()
+            r2 = random_sample()
+
+            # Compute propensities
+            reaction = 0
+            asum = 0.0
+            self.prop_t_(t_now, tcoef)
+            for r in range(0, num_reactions):
+                self.prop_x_(r, xtmp, tmp_array)
+                props[r] = tcoef[r] * tmp_array[0]
+                asum = asum + props[r]
+
+            # Decide time step
+            tau = log(1.0 / r1) / asum
+
+            if tau < 0.0:
+                break
+
+            if t_now + tau > t_final:
+                break
+
+            # Determine the reaction that will happen
+            tmp = 0.0
+            for reaction in range(0, num_reactions):
+                tmp = tmp + props[reaction]
+                if tmp >= r2 * asum:
+                    break
+
+            X[0, :] = xtmp[:] + self.stoich_matrix_[reaction, :]
+            t_now = t_now + tau
+        return X

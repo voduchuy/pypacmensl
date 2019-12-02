@@ -1,5 +1,6 @@
 from libcpp.vector cimport vector
 from mpi4py.libmpi cimport MPI_Comm
+from pypacmensl.libpacmensl._callbacks cimport WeightFun
 from pypacmensl.libpacmensl._discrete_distribution cimport DiscreteDistribution
 from pypacmensl.libpacmensl._state_set cimport StateSetBase
 cimport pypacmensl.arma.arma4cy as arma
@@ -30,9 +31,14 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
         #
         # void RestoreProbView(PetscReal* p)
 
-        int GetSensView(int, int num_states, double* p)
+        int GetSensView(int, int num_states, double*p)
 
-        int RestoreSensView(int, PetscReal* p)
+        int RestoreSensView(int, PetscReal*p)
+
+        int WeightedAverage(int iS, int nout,
+                            PetscReal *fout,
+                            WeightFun w,
+                            void *wf_args)
 
     arma.Col[PetscReal] Compute1DMarginal(const SensDiscreteDistribution dist, int species)
 
