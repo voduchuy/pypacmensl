@@ -57,9 +57,10 @@ tspan = np.linspace(0, 1, 2)
 
 # Create FSP solver object
 solver = FspSolverMultiSinks(MPI.COMM_WORLD)
-solver.SetModel(sm, propensity)
+solver.SetModel(sm, None, propensity)
 solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
 solver.SetInitialDist(x0, p0)
+solver.SetOdeSolver("CVODE")
 solver.SetVerbosity(2)
 
 t1 = MPI.Wtime()

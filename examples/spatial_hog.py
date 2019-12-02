@@ -120,7 +120,7 @@ init_bounds = np.array([1, 1, 1, 1, 50, 100])
 
 # Create parallel solver object
 solver = pacmensl.FspSolverMultiSinks(MPI.COMM_WORLD)
-solver.SetModel(sm, propensity, t_fun, [1])
+solver.SetModel(sm, t_fun, propensity,  [1])
 solver.SetFspShape(constr_fun=None, constr_bound=init_bounds)
 solver.SetInitialDist(x0, p0)
 solver.SetVerbosity(2)
@@ -134,7 +134,7 @@ solver.ClearState()
 
 # Create parallel solver object
 solver = pacmensl.FspSolverMultiSinks(MPI.COMM_WORLD)
-solver.SetModel(sm, propensity, t_fun, [1])
+solver.SetModel(sm, t_fun, propensity,  [1])
 solver.SetFspShape(constr_fun=None, constr_bound=init_bounds)
 solver.SetInitialDist(x0, p0)
 solver.SetVerbosity(2)

@@ -13,7 +13,7 @@ cdef class FspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_x, propensity_t = None, tv_reactions = None):
+    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t , propensity_x,  tv_reactions = None):
         """
         def SetModel(self, stoich_matrix, propensity_x, propensity_t, tv_reactions)
 
@@ -21,18 +21,18 @@ cdef class FspSolverMultiSinks:
 
         :param stoich_matrix: stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
 
-        :param propensity_x:
-                callable object representing the time-independent factors of the propensities. It must have signature
-                        def propensity_x( i_reaction, states, out )
-                where i_reaction is the reaction index, states[:, :] an array where each row is an input state, and out[:] is
-                the output array to be written to.
-
         :param propensity_t:
                 (Optional) callable object for computing the time-dependent coefficients. It must have signature
                         def propensity_t( t, out )
                 where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
                 This is only needed when solving a model with time-varying propensities, in which case you also need to
-                input tv_reactions. If not specified or set to None, the model is assumed to have time-invariant propensities.
+                input tv_reactions. If set to None, the model is assumed to have time-invariant propensities.
+
+        :param propensity_x:
+                callable object representing the time-independent factors of the propensities. It must have signature
+                        def propensity_x( i_reaction, states, out )
+                where i_reaction is the reaction index, states[:, :] an array where each row is an input state, and out[:] is
+                the output array to be written to.
 
         :param tv_reactions:
                 (Optional) array-like object that stores the indices of the reactions whose propensities are time-varying.
