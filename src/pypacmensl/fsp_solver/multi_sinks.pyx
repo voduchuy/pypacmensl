@@ -239,6 +239,17 @@ cdef class FspSolverMultiSinks:
         cdef string type_str = type.encode('ASCII')
         self.this_[0].SetOdesPetscType(type_str)
 
+    def SetKrylovOrthLength(self, int q=-1):
+        """
+        SetKrylovOrthLength(self, int q=-1)
+        Set the length of orthogonalization (if q=-1 use full orthogonalization).
+        :param q:
+        :type q:
+        :return:
+        :rtype:
+        """
+        self.this_[0].SetKrylovOrthLength(q)
+
     def ClearState(self):
         self.this_[0].ClearState()
         self.set_up_ = False

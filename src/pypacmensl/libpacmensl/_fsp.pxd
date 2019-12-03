@@ -67,6 +67,8 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         int SetOdesPetscType(string ts_type) except +
 
+        int SetKrylovOrthLength(int q) except +
+
         int SetOdeTolerances(PetscReal rel_tol, PetscReal abs_tol) except +
 
         int SetUp( ) except +

@@ -65,17 +65,41 @@ solver.SetVerbosity(2)
 
 t1 = MPI.Wtime()
 solution_cvode = solver.SolveTspan(tspan, 1.0e-4)
-if (rank == 0):
-    print("Solve with CVODE takes " + str(MPI.Wtime() - t1))
+t_cvode = MPI.Wtime() - t1
+
 
 solver.ClearState()
 solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
 solver.SetOdeSolver("KRYLOV")
+solver.SetKrylovOrthLength(-1)
 solver.SetVerbosity(2)
 t1 = MPI.Wtime()
 solution_krylov = solver.SolveTspan(tspan, 1.0e-4)
+t_kry = MPI.Wtime() - t1
+
+
+solver.ClearState()
+solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
+solver.SetOdeSolver("KRYLOV")
+solver.SetKrylovOrthLength(2)
+solver.SetVerbosity(2)
+t1 = MPI.Wtime()
+solution_iop = solver.SolveTspan(tspan, 1.0e-4)
+t_iop = MPI.Wtime() - t1
+
+solver.ClearState()
+solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
+solver.SetOdeSolver("PETSC")
+solver.SetVerbosity(2)
+t1 = MPI.Wtime()
+solution_petsc = solver.SolveTspan(tspan, 1.0e-4)
+t_petsc = MPI.Wtime() - t1
+
 if (rank == 0):
-    print("Solve with Krylov takes " + str(MPI.Wtime() - t1))
+    print(f"Solve with CVODE takes {t_cvode} \n")
+    print(f"Solve with Krylov FOP takes {t_kry} \n")
+    print(f"Solve with Krylov IOP takes {t_iop} \n")
+    print(f"Solve with PETSc takes {t_petsc} \n")
 
 if rank == 0:
     fig, axes = plt.subplots(len(tspan),3)
@@ -84,10 +108,12 @@ for it in range(0, len(tspan)):
     for ix in range(0,3):
         pmar1 = solution_cvode[it].Marginal(ix)
         pmar2 = solution_krylov[it].Marginal(ix)
+        pmar3 = solution_iop[it].Marginal(ix)
 
         if rank == 0:
             axes[it, ix].plot(pmar1, label='CVODE', color='r')
             axes[it, ix].plot(pmar2, label='Krylov', color='b')
+            axes[it, ix].plot(pmar3, label='IOP', color='m')
 
 if rank == 0:
     plt.show()
