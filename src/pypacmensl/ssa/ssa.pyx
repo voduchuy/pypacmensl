@@ -14,8 +14,6 @@ cdef class SSASolver:
         else:
             self.comm_ = comm
 
-    def __dealloc__(self):
-        self.comm_.Free()
 
     def SetModel(self, np.ndarray stoich_matrix, propensity_t, propensity_x):
         self.prop_t_ = propensity_t
