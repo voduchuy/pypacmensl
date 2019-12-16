@@ -10,9 +10,12 @@ cdef class SSASolver:
         self.prop_x_ = None
         self.stoich_matrix_ = np.empty((0, 0))
         if comm is None:
-            self.comm_ = MPI.Comm.COMM_SELF.Dup()
+            self.comm_ = MPI.Comm.COMM_SELF
         else:
-            self.comm_ = comm.Dup()
+            self.comm_ = comm
+
+    def __dealloc__(self):
+        self.comm_.Free()
 
     def SetModel(self, np.ndarray stoich_matrix, propensity_t, propensity_x):
         self.prop_t_ = propensity_t
