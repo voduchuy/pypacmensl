@@ -46,6 +46,7 @@ for i in range(0, 3):
     for j in range(0, n_t):
         marginals.append(solutions[j].Marginal(i))
 
+
 def weightfun(x, fout):
     fout[0] = 1.0*x[2]
     fout[1] = x[2]*x[2]
@@ -54,7 +55,7 @@ def weightfun(x, fout):
 meanvar = np.zeros((n_t, 2), dtype=np.double)
 
 for j in range(0, n_t):
-    meanvar[j, :] = solutions[j].WeightedAverage(1, weightfun)
+    meanvar[j, :] = solutions[j].WeightedAverage(2, weightfun)
 
 rank = mpi.COMM_WORLD.rank
 if rank == 0:

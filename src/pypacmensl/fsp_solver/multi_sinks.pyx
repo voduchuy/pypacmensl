@@ -179,6 +179,17 @@ cdef class FspSolverMultiSinks:
         self.set_up_ = True
 
     def Solve(self, double t_final, double fsp_tol = -1.0, double t_init = 0.0,):
+        """
+        Solve the CME up to a time point.
+        :param t_final: final time.
+        :type t_final: float.
+        :param fsp_tol: FSP error tolerance. The solver will expand the state set to ensure the final truncation error is within tolerance.
+        :type fsp_tol: float.
+        If set to negative, the solver will not check the error.
+        :param t_init: (optional) Initial time (default is 0).
+        :return: solution at t_final.
+        :rtype: DiscreteDistribution.
+        """
         if self.set_up_ is not True:
             self.SetUp()
 
