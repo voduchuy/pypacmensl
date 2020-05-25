@@ -1,11 +1,12 @@
 # distutils: language = c++
 import numpy as np
-from numpy.random import random_sample
-from math import log, exp
 import mpi4py.MPI as MPI
+from numpy.random import random_sample, PCG64, SeedSequence
+from math import log
+
 
 cdef class SSASolver:
-    def __cinit__(self, comm = None):
+    def __cinit__(self, comm = None, seed_seq = None):
         self.prop_t_ = None
         self.prop_x_ = None
         self.stoich_matrix_ = np.empty((0, 0))
@@ -13,6 +14,15 @@ cdef class SSASolver:
             self.comm_ = MPI.Comm.COMM_SELF
         else:
             self.comm_ = comm
+        if seed_seq is None:
+            seq = SeedSequence()
+            if comm.Get_rank() == 0:
+                ss = [np.random.PCG64(s) for s in seq.spawn(comm.Get_size())]
+            else:
+                ss = None
+            self.bitGen_ = comm.scatter(ss, root=0)
+        else:
+            self.bitGen_ = PCG64(seed_seq)
 
 
     def SetModel(self, np.ndarray stoich_matrix, propensity_t, propensity_x):
@@ -33,6 +43,7 @@ cdef class SSASolver:
             double asum, tmp
             np.ndarray xtmp
             np.ndarray props, tcoef
+
 
         rank = self.comm_.Get_rank()
         num_procs = self.comm_.Get_size()
@@ -55,6 +66,10 @@ cdef class SSASolver:
             double[:] propsview = props
             int[:,:] xtmpview = xtmp
             double[:] tmpview = tmp_array
+            bitgen_t* rng;
+
+        capsule = self.bitGen_.capsule
+        rng = <bitgen_t*> PyCapsule_GetPointer(capsule, "BitGenerator")
 
         outputs_local = np.zeros((num_samples_local, num_species), dtype=np.intc)
 
@@ -62,8 +77,8 @@ cdef class SSASolver:
             xtmp[0, :] = x0
             t_now = 0.0
             while t_now < t_final:
-                r1 = random_sample()
-                r2 = random_sample()
+                r1 = rng.next_double(rng.state)
+                r2 = rng.next_double(rng.state)
 
                 # Compute propensities
                 reaction = 0
@@ -134,6 +149,10 @@ cdef class SSASolver:
             double asum, tmp
             np.ndarray xtmp
             np.ndarray props, tcoef
+            bitgen_t* rng;
+
+        capsule = self.bitGen_.capsule
+        rng = <bitgen_t*> PyCapsule_GetPointer(capsule, "BitGenerator")
 
         rank = self.comm_.Get_rank()
         num_procs = self.comm_.Get_size()
@@ -164,8 +183,8 @@ cdef class SSASolver:
             xtmp[0, :] = x0
             t_now = 0.0
             while t_now < t_final:
-                r1 = random_sample()
-                r2 = random_sample()
+                r1 = rng.next_double(rng.state)
+                r2 = rng.next_double(rng.state)
 
                 # Compute propensities
                 reaction = 0
@@ -299,3 +318,8 @@ cdef class SSATrajectory:
             X[0, :] = xtmp[:] + self.stoich_matrix_[reaction, :]
             t_now = t_now + tau
         return X
+
+
+
+
+

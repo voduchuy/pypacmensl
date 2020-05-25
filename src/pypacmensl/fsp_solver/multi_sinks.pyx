@@ -13,7 +13,7 @@ cdef class FspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t , propensity_x,  tv_reactions = None):
+    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x, tv_reactions = None):
         """
         def SetModel(self, stoich_matrix, propensity_x, propensity_t, tv_reactions)
 
@@ -47,7 +47,7 @@ cdef class FspSolverMultiSinks:
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
 
-        cdef void* prop_t_ptr
+        cdef void*prop_t_ptr
         cdef vector[int] tv_react
 
         if propensity_t is None:
@@ -133,8 +133,8 @@ cdef class FspSolverMultiSinks:
         exp_factors = exp_factors.astype(np.double)
         exp_factors = np.ascontiguousarray(exp_factors)
         cdef arma.Row[_fsp.PetscReal] exp_factors_arma = arma.Row[_fsp.PetscReal](
-                <double*> exp_factors.data,
-                exp_factors.size, 0, 1)
+            <double*> exp_factors.data,
+            exp_factors.size, 0, 1)
         self.this_[0].SetExpansionFactors(exp_factors_arma)
 
     def SetVerbosity(self, int level):
@@ -178,7 +178,7 @@ cdef class FspSolverMultiSinks:
         self.this_[0].SetUp()
         self.set_up_ = True
 
-    def Solve(self, double t_final, double fsp_tol = -1.0, double t_init = 0.0,):
+    def Solve(self, double t_final, double fsp_tol = -1.0, double t_init = 0.0, ):
         """
         Solve the CME up to a time point.
         :param t_final: final time.
@@ -201,7 +201,7 @@ cdef class FspSolverMultiSinks:
             return None
         return solution
 
-    def SolveTspan(self, tspan, double fsp_tol = -1.0, double t_init = 0.0 ):
+    def SolveTspan(self, tspan, double fsp_tol = -1.0, double t_init = 0.0):
         if self.set_up_ is not True:
             self.SetUp()
         cdef int ntspan = tspan.size

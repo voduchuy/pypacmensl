@@ -6,15 +6,17 @@ comm = mpi.COMM_WORLD
 
 stoich = np.array([[1], [-1]], dtype=np.intc)
 
+
 def t_fun(t, out):
     out[0] = 20.0
     out[1] = 20.0
+
 
 def prop(reaction, X, out):
     if reaction == 0:
         out[:] = 1.0
     if reaction == 1:
-        out[:] = np.double(X[:,0])
+        out[:] = np.double(X[:, 0])
     return
 
 
@@ -33,4 +35,3 @@ solver.ClearState()
 
 p = solution0.Marginal(0)
 print(p)
-
