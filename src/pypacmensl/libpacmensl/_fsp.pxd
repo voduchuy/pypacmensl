@@ -69,6 +69,8 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
 
         int SetKrylovOrthLength(int q) except +
 
+        int SetKrylovDimRange(int m_min, int m_max) except +
+
         int SetOdeTolerances(PetscReal rel_tol, PetscReal abs_tol) except +
 
         int SetUp( ) except +

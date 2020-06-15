@@ -202,6 +202,27 @@ cdef class FspSolverMultiSinks:
         return solution
 
     def SolveTspan(self, tspan, double fsp_tol = -1.0, double t_init = 0.0):
+        """
+        Solve the chemical master equation over multiple timepoints.
+
+        Parameters
+        ----------
+
+        tspan: np.ndarray
+            one-dimensional array of timepoints to output the solutions. This array must be sorted in the ascending
+            direction.
+
+        fsp_tol: double
+            FSP tolerance.
+
+        t_init: double
+            Starting time. Default: 0.
+
+        Returns
+        -------
+
+        list of DiscreteDistribution. The i-th member corresponds to the approximate solution at time tspan[i].
+        """
         if self.set_up_ is not True:
             self.SetUp()
         cdef int ntspan = tspan.size
@@ -260,6 +281,12 @@ cdef class FspSolverMultiSinks:
         :rtype:
         """
         self.this_[0].SetKrylovOrthLength(q)
+
+    def SetKrylovDimRange(self, int m_min, int m_max):
+        """
+        Set the range for the dimension of the adaptive Krylov basis.
+        """
+        self.this_[0].SetKrylovDimRange(m_min, m_max)
 
     def ClearState(self):
         self.this_[0].ClearState()
