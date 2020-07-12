@@ -3,7 +3,7 @@ import numpy as np
 import mpi4py.MPI as MPI
 from numpy.random import random_sample, PCG64, SeedSequence
 from math import log
-
+from scipy.stats import poisson
 
 cdef class SSASolver:
     def __cinit__(self, comm = None, seed_seq = None):
@@ -656,6 +656,64 @@ cdef class PmPdmsrSampler:
             gene_states = outputs_local
             poisson_states = poisson_states_local
         return gene_states, poisson_states
+
+    def compute_loglike(self, poisson_parameters: np.ndarray, observations: np.ndarray)->float:
+        """
+        Compute the loglikelihood of observing a dataset of mRNA molecular counts from the PMPDMSR samples.
+
+        Parameters
+        ----------
+        poisson_parameters : numpy array
+
+        observations : numpy array
+            Single-cell measurements. Each row is one measurement. The number of columns must equal the number of RNA species measured.
+            All processes must pass the same set of observations.
+
+        Returns
+        -------
+
+        Log-likelihood of the dataset.
+
+        Notes
+        -----
+
+        All processes must pass the same set of observations.
+        """
+        comm = self.comm_
+
+        nsamples_local = poisson_parameters.shape[0]
+        nsamples = comm.allreduce(nsamples_local, MPI.SUM)
+
+        num_observations = observations.shape[0]
+        num_rnas = observations.shape[1]
+
+        x_eval_points = []
+        p_marginal_evals = []
+        for i in range(0, num_rnas):
+            unique_obs, unique_inverse = np.unique(observations[:, i], return_inverse=True)
+            x_eval_points.append({
+                    "eval_points": unique_obs,
+                    "inverse": unique_inverse
+            })
+            p_marginal_evals.append(np.zeros((unique_obs.shape[0]), dtype=float))
+
+
+        p_local = np.zeros((num_observations,), dtype=float)
+        p_loc_term = np.ones((num_observations,))
+        for j in range(0, nsamples_local):
+            p_loc_term[:] = 1.0
+            for ispecies in range(0, num_rnas):
+                p_marginal_evals[ispecies] = poisson.pmf(x_eval_points[ispecies]["eval_points"],
+                                                         mu=poisson_parameters[j, ispecies])
+                p_loc_term *= p_marginal_evals[ispecies][x_eval_points[ispecies]["inverse"]]
+            p_local += p_loc_term
+
+        p_global = comm.allreduce(p_local, MPI.SUM)
+        p_global = (1.0 / nsamples) * p_global
+        p_global[p_global < 1E-16] = 1E-16
+
+        ll = float(np.sum(np.log(p_global)))
+        return ll
 
 
 
