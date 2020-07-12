@@ -5,8 +5,6 @@ import mpi4py.MPI as mpi
 import numpy as np
 import matplotlib.pyplot as plt
 
-from numpy import linalg as LA
-
 # %%
 stoich_matrix = np.array(
     [
@@ -16,7 +14,6 @@ stoich_matrix = np.array(
         [0, -1]
     ]
 )
-
 
 def tcoeff(t, out):
     out[0] = 35.0
@@ -40,7 +37,6 @@ def propensity(reaction, states, outs):
 
 
 def simple_constr(X, out):
-    # The spear of Adun
     out[:, 0] = X[:, 0]
     out[:, 1] = X[:, 1]
     out[:, 2] = X[:, 0] + X[:, 1]
@@ -127,20 +123,15 @@ DetFIMs1 = np.zeros(len(FIMatrices1))
 for i in range(0, len(DetFIMs1)):
     DetFIMs1[i] = np.linalg.det(n_cells * FIMatrices1[i])
 # %%
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
-plt.rc('text', usetex=True)
-plt.plot(t_meas, np.log10(DetFIMs))
-plt.plot(t_meas, np.log10(DetFIMs0))
-plt.plot(t_meas, np.log10(DetFIMs1))
-plt.xlabel('Time (sec)')
-plt.ylabel(r'$\log_{10}(|FIM|)$')
-plt.show()
+if comm.Get_rank() == 0:
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    plt.rc('text', usetex=True)
+    plt.plot(t_meas, np.log10(DetFIMs), label="Observing both species")
+    plt.plot(t_meas, np.log10(DetFIMs0), label="Observing species 0")
+    plt.plot(t_meas, np.log10(DetFIMs1), label="Observing species 1")
+    plt.set_title("Log10-determinant of the Fisher Information Matrix for different combinations of observables")
+    plt.xlabel('Time (sec)')
+    plt.ylabel(r'$\log_{10}(|FIM|)$')
+    plt.show()
 
-# %%
-s = solutions[20]
-X = s.GetStatesViewer()
-p = s.GetProbViewer()
-
-plt.scatter(X[:, 0], X[:, 1], c=np.log10(p))
-plt.colorbar()

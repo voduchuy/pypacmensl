@@ -16,3 +16,13 @@ cdef class SSATrajectory:
         object prop_t_
         object prop_x_
         np.ndarray stoich_matrix_
+
+cdef class PmPdmsrSampler:
+    cdef:
+        MPI.Comm comm_
+        object prop_t_
+        object prop_x_
+        np.ndarray stoich_matrix_
+        object f_transcr_
+        np.ndarray deg_rates_
+        object bitGen_

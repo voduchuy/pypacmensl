@@ -81,9 +81,9 @@ my_set_hypergraph.Expand()
 f2, ax2 = plot_state_set(comm, my_set_hypergraph)
 ax2.set_title('Hypergraph-partitioned FSP')
 
-#%%
-if (my_rank == 0):
-    f0.savefig('naive_fsp.eps', format='eps')
-    f1.savefig('graph_fsp.eps', format='eps')
-    f2.savefig('hypergraph_fsp.eps', format='eps')
-    plt.show()
+#%% Uncomment if you want to save the plots to files
+# if (my_rank == 0):
+#     f0.savefig('naive_fsp.eps', format='eps')
+#     f1.savefig('graph_fsp.eps', format='eps')
+#     f2.savefig('hypergraph_fsp.eps', format='eps')
+#     plt.show()
