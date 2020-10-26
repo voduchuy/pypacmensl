@@ -11,16 +11,16 @@ def tcoeff(t, out):
     out[3] = 1
 
 def propensity(reaction, states, outs):
-    if reaction is 0:
+    if reaction == 0:
         outs[:] = np.reciprocal(1 + states[:, 1])
         return
-    if reaction is 1:
+    if reaction == 1:
         outs[:] = states[:, 0]
         return
-    if reaction is 2:
+    if reaction == 2:
         outs[:] = np.reciprocal(1 + states[:, 0])
         return
-    if reaction is 3:
+    if reaction == 3:
         outs[:] = states[:, 1]
 
 def simple_constr(X, out):
@@ -79,7 +79,7 @@ class TestFspSolver(unittest.TestCase):
 
     def test_solve_parallel_krylov(self):
         solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
-        solver.SetModel(self.stoich_mat, tcoeff, propensity)
+        solver.SetModel(self.stoich_mat, tcoeff, propensity, [])
         solver.SetFspShape(simple_constr, init_bounds)
         X0 = np.array([[0,0]])
         p0 = np.array([1.0])
@@ -93,7 +93,7 @@ class TestFspSolver(unittest.TestCase):
 
     def test_solve_parallel_twice(self):
         solver = pac.FspSolverMultiSinks(mpi.COMM_WORLD)
-        solver.SetModel(self.stoich_mat, tcoeff, propensity)
+        solver.SetModel(self.stoich_mat, tcoeff, propensity, [])
         solver.SetFspShape(simple_constr, init_bounds)
         X0 = np.array([[0,0]])
         p0 = np.array([1.0])

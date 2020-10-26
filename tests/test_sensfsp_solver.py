@@ -19,26 +19,25 @@ def dtcoeff_factory(i):
 
 
 def propensity(reaction, states, outs):
-    if reaction is 0:
+    if reaction == 0:
         outs[:] = np.reciprocal(1 + states[:, 1])
         return
-    if reaction is 1:
+    if reaction == 1:
         outs[:] = states[:, 0]
         return
-    if reaction is 2:
+    if reaction == 2:
         outs[:] = np.reciprocal(1 + states[:, 0])
         return
-    if reaction is 3:
+    if reaction == 3:
         outs[:] = states[:, 1]
 
 
 def simple_constr(X, out):
-    # The spear of Adun
     out[:, 0] = X[:, 0]
     out[:, 1] = X[:, 1]
 
 
-init_bounds = np.array([10, 10, 10])
+init_bounds = np.array([10, 10])
 
 dtcoeff = []
 for i in range(0, 4):
@@ -82,7 +81,7 @@ class TestFspSolver(unittest.TestCase):
         p0 = np.array([1.0])
         s0 = np.array([0.0])
         solver.SetInitialDist(X0, p0, [s0]*4)
-        solution = solver.Solve(10.0, 1.0e-4)
+        solution = solver.Solve(10.0, 1.0E-4)
         prob = np.asarray(solution.GetProbViewer())
         self.assertAlmostEqual(prob.sum(), 1.0, 4)
         for i in range(0,4):

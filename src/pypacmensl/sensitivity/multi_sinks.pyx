@@ -52,12 +52,15 @@ cdef class SensFspSolverMultiSinks:
             raise RuntimeError("Input d_propensity_t and d_propensity_x must have the same number of elements")
 
         # convert stoich_matrix to armadillo array
-        if stoich_matrix.dtype is not np.intc:
+        if stoich_matrix.dtype != np.intc:
             stoich_matrix = stoich_matrix.astype(np.intc)
         if not stoich_matrix.flags['C_CONTIGUOUS']:
             stoich_matrix = np.ascontiguousarray(stoich_matrix)
-        if sparsity_patterns.dtype is not np.intc:
-            sparsity_patterns = sparsity_patterns.astype(np.intc)
+
+
+        if sparsity_patterns is not None:
+            if sparsity_patterns.dtype != np.intc:
+                sparsity_patterns = sparsity_patterns.astype(np.intc)
 
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
@@ -140,6 +143,21 @@ cdef class SensFspSolverMultiSinks:
             v = np.ascontiguousarray(s0[i]).astype(np.double)
             s0_vector.push_back(arma.Col[_fsp.PetscReal](<double*> v.data, v.size, 1, 1))
         ierr = self.this_[0].SetInitialDistribution(X0_arma, p0_arma, s0_vector)
+        assert (ierr == 0)
+
+    def SetInitialDist1(self, sdd.SensDiscreteDistribution s0):
+        """
+        Set initial condition for the forward sensitivity system.
+
+        Args:
+            s0 (SensDiscretDistribution): Initial probability and sensitivities
+
+        Returns:
+            None
+
+        """
+        cdef int ierr = 0
+        ierr = self.this_[0].SetInitialDistribution(s0.this_[0])
         assert (ierr == 0)
 
     def SetFspShape(self, constr_fun, cnp.ndarray constr_bound, cnp.ndarray exp_factors = None):

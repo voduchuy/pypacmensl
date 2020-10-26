@@ -135,6 +135,7 @@ cdef extern from "pacmensl.h" namespace "pacmensl":
           int SetInitialDistribution(arma.Mat[int] &_init_states,
                                                    arma.Col[PetscReal] &_init_probs,
                                                    vector[arma.Col[PetscReal]] &_init_sens)
+          int SetInitialDistribution(SensDiscreteDistribution dist)
           int SetLoadBalancingMethod(PartitioningType part_type)
           int SetUp()
           const StateSetBase *GetStateSet()
