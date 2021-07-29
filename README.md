@@ -7,8 +7,8 @@ Python wrapper for the [PACMENSL](https://github.com/voduchuy/pacmensl) library.
 - Python 3.6+.
 - mpi4py (https://mpi4py.readthedocs.io/en/stable/).
 - numpy 1.18.5+.
-- cython.
-- distutils.
+- [Cython](https://cython.org/).
+- Distutils.
 - A C++ compiler.
 - A MPI distribution such as OpenMPI.
 - PACMENSL must be installed and added to your C++ compiler's search path.
