@@ -19,6 +19,7 @@ To install for all users:
 `
 python setup.py install
 `
+
 To install for local user:
 `
 python setup.py install --user
