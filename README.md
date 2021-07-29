@@ -10,8 +10,8 @@ Python wrapper for the [PACMENSL](https://github.com/voduchuy/pacmensl) library.
 - [Cython](https://cython.org/).
 - Distutils.
 - A C++ compiler.
-- A MPI distribution such as OpenMPI.
-- PACMENSL must be installed and added to your C++ compiler's search path.
+- An MPI distribution such as [OpenMPI](https://www.open-mpi.org/).
+- [PACMENSL](https://github.com/voduchuy/pacmensl) must be installed and added to your C++ compiler's search path.
 
 ## Installation
 
