@@ -31,7 +31,7 @@ cdef class StationaryFspSolverMultiSinks:
         :param propensity_x:
                 callable object representing the time-independent factors of the propensities. It must have signature
                         def propensity_x( i_reaction, states, out )
-                where i_reaction is the reaction index, states[:, :] an array where each row is an input state, and out[:] is
+                where i_reaction is the reaction_idx index, states[:, :] an array where each row is an input state, and out[:] is
                 the output array to be written to.
         """
         cdef int ierr
@@ -43,7 +43,7 @@ cdef class StationaryFspSolverMultiSinks:
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], True, False)
 
-        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_t_fun_obj, call_py_prop_obj,
+        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_propt_obj, call_py_propx_obj,
                                             <void*> propensity_t, <void*> propensity_x)
 
         ierr = self.this_[0].SetModel(model_)

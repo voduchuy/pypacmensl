@@ -1,0 +1,8 @@
+.idea
+build
+dist
+*.pdf
+*.png
+*.npz
+*.cpp
+*.h

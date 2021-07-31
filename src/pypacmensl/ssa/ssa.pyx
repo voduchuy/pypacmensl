@@ -101,7 +101,7 @@ cdef class SSASolver:
                 if t_now + tau > t_final:
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_reactions):
                     tmp = tmp + propsview[reaction]
@@ -208,7 +208,7 @@ cdef class SSASolver:
                 if t_now + tau > t_final:
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_reactions):
                     tmp = tmp + propsview[reaction]
@@ -321,7 +321,7 @@ cdef class SSATrajectory:
                         break
                 break
 
-            # Determine the reaction that will happen
+            # Determine the reaction_idx that will happen
             tmp = 0.0
             for reaction in range(0, num_reactions):
                 tmp = tmp + props[reaction]
@@ -476,7 +476,7 @@ cdef class PmPdmsrSampler:
                     (poisson_state_tmp[:] - self.f_transcr_(xtmp[0, :])/self.deg_rates_)*np.exp(-self.deg_rates_*tau)
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_transitions):
                     tmp = tmp + propsview[reaction]
@@ -547,7 +547,7 @@ cdef class PmPdmsrSampler:
 
         update_rates: double
             A small number to safeguard against timepoints where all propensities are zero. In particular,
-            we add a "null" reaction that does nothing, but has a small rate, so that when all the usual propensities are zero,
+            we add a "null" reaction_idx that does nothing, but has a small rate, so that when all the usual propensities are zero,
             the SSA will only jump a small step ahead rather than to the final endpoint.
 
         Returns
@@ -632,7 +632,7 @@ cdef class PmPdmsrSampler:
                                            (poisson_state_tmp[:] - self.f_transcr_(xtmp[0, :])/self.deg_rates_)*np.exp(-self.deg_rates_*tau)
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_reactions+1):
                     tmp = tmp + propsview[reaction]

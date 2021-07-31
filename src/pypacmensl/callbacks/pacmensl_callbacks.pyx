@@ -1,25 +1,33 @@
 # distutils: language = c++
 import numpy as np
 
-cdef int call_py_prop_obj(const int reaction, const int num_species, const int num_states, const int* states, double* outputs, void* args):
+cdef int call_py_propx_obj(const int reaction_idx,
+                          const int num_species,
+                          const int num_states,
+                          const int* states,
+                          double* outputs,
+                          void* args):
     cdef PyObject* obj = <PyObject*> args
     if args == NULL:
-        print('Null object passed to call_py_prop_obj.')
+        print('Null object passed to call_py_propx_obj.')
         return -1
     cdef int[:,::1] state_view = <int[:num_states,:num_species]> states
     cdef double[::1] out_view = <double[:num_states]> outputs
     try:
         state_np = np.asarray(state_view)
         out_np = np.asarray(out_view)
-        (<object>obj)(reaction, state_np, out_np)
+        (<object>obj)(reaction_idx, state_np, out_np)
     except:
         return -1
     return 0
 
-cdef int call_py_t_fun_obj (double t, int num_coefs, double* outputs, void* args):
+cdef int call_py_propt_obj (double t,
+                            int num_coefs,
+                            double* outputs,
+                            void* args):
     cdef PyObject* obj = <PyObject*> args
     if args == NULL:
-        print('Null object passed to call_py_t_fun_obj.')
+        print('Null object passed to call_py_propt_obj.')
         return -1
     cdef double[::1] out_view = <double[:num_coefs]> outputs
     try:
@@ -29,7 +37,40 @@ cdef int call_py_t_fun_obj (double t, int num_coefs, double* outputs, void* args
         return -1
     return 0
 
-cdef int call_py_constr_obj(int num_species, int num_constr, int n_states, int *states, int *outputs, void *args):
+cdef int call_py_dpropx_obj(const int parameter_idx, const int reaction_idx, const int num_species, const int num_states, const int* states, double* outputs, void* args):
+    cdef PyObject* obj = <PyObject*> args
+    if args == NULL:
+        print('Null object passed to call_py_propt_obj.')
+        return -1
+    cdef int[:,::1] state_view = <int[:num_states,:num_species]> states
+    cdef double[::1] out_view = <double[:num_states]> outputs
+    try:
+        state_np = np.asarray(state_view)
+        out_np = np.asarray(out_view)
+        (<object>obj)(parameter_idx, reaction_idx, state_np, out_np)
+    except:
+        return -1
+    return 0
+
+cdef int call_py_dpropt_obj(const int parameter_idx, double t, int num_coefs, double* outputs, void* args):
+    cdef PyObject* obj = <PyObject*> args
+    if args == NULL:
+        print('Null object passed to call_py_propt_obj.')
+        return -1
+    cdef double[::1] out_view = <double[:num_coefs]> outputs
+    try:
+        out_np = np.asarray(out_view)
+        (<object>obj)(parameter_idx, t, out_np)
+    except:
+        return -1
+    return 0
+
+cdef int call_py_constr_obj(int num_species,
+                            int num_constr,
+                            int n_states,
+                            int *states,
+                            int *outputs,
+                            void *args):
     cdef PyObject* obj = <PyObject*> args
     if args == NULL:
         print('Null object passed to call_py_constr_obj.')
@@ -44,7 +85,11 @@ cdef int call_py_constr_obj(int num_species, int num_constr, int n_states, int *
         return -1
     return 0
 
-cdef int call_py_weight_fun(int num_species, int* x, int nout, double* fout, void* args):
+cdef int call_py_weight_fun(int num_species,
+                            int* x,
+                            int nout,
+                            double* fout,
+                            void* args):
     cdef PyObject* obj = <PyObject*> args
     if args == NULL:
         print('Null object passed to call_py_weight_fun.')
