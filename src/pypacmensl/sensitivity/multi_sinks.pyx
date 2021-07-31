@@ -14,94 +14,120 @@ cdef class SensFspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x, d_propensity_t, d_propensity_x,
-                 cnp.ndarray sparsity_patterns = None):
-        """
-        def SetModel(self, stoich_matrix, t_fun, propensity)
+    def SetModel(self,
+                 int num_parameters,
+                 cnp.ndarray stoich_matrix,
+                 propensity_t,
+                 propensity_x,
+                 tv_reactions,
+                 d_propensity_t=None,
+                 d_propensity_t_sp=None,
+                 d_propensity_x=None,
+                 d_propensity_x_sp=None
+                 ):
+        '''
+        Set the information of the stochastic reaction network model to be solved by the forward sensitivity FSP.
 
-        Set the stochastic chemical kinetics model to be solved.
+        Parameters
+        ----------
 
-        :param stoich_matrix: stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
+        num_parameters : int
+            Number of model parameters.
 
-        :param propensity_t:
-                callable object for computing the time-dependent coefficients. It must have signature
-                        def propensity_t( t, out )
-                where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
+        stoich_matrix : 2-d array
+             Stoichiometry matrix. Reactions are arranged row-wise.
 
-        :param propensity_x:
-                callable object representing the time-independent factors of the propensities. It must have signature
-                        def propensity_x( i_reaction, states, out )
-                where i_reaction is the reaction index, states[:, :] an array where each row is an input state, and out[:] is
-                the output array to be written to.
+        propensity_t : Callable[[float, np.ndarray], None]
+            Function to evaluate the time-varying coefficients of the propensities. This could be set to None if all
+            reaction propensities are time-independent. The callable should fill only the entries corresponding to time-varying propensities
+            in the output array.
 
-        :param d_propensity_t:
-                list of callable objects for the time-dependent coefficients of the derivatives of propensity functions. This
-                list has the same number of elements as sensitivity parameters.
+        propensity_x : Callable[[int, np.ndarray, np.ndarray], None]
+            Function to evaluate the state-dependent factors of the propensities. The first argument is the reaction index,
+            the second argument is the input array of states (arranged row-wise), the third argument is the 1-d output array.
 
-        :param d_propensity_x:
-                list of callable objects for the state-dependent factors of the derivatives of propensity functions. This list has the same
-                number of elements as sensitivity parameters.
+        tv_reactions : List[int]
+            List of time-varying reactions. If empty, we assume all reactions are time-independent.
 
-        :param sparsity_patterns:
-                sparsity pattern of the propensity derivatives. If provided, must be an array of size num_parameters x num_reactions, with sparsity_patterns[i][j] = 1
-                if the derivative of the j-th propensity wrt the i-th parameter is nonzero, and sparsity_pattersn[i][j] = 0 otherwise.
-        """
+        d_propensity_t : Callable[[int, float, np.ndarray], None]
+            Function to evaluate the derivatives of the time-varying propensity coefficients with respect to a specified parameter.
+            The first argument is the parameter index, the second parameter is time, the third argument is the output 1-d array with
+            the same length as the number of reactions. The callable should fill only the entries corresponding to time-varying propensities
+            in the output array.
+
+        d_propensity_t_sp : List[List[int]]
+            Sparsity pattern for the d_propensity_t. Must be a list of array-like objects with `len(d_propensity_t_sp) == num_parameters`.
+            For example, `d_propensity_t_sp[0] = [0, 1, 3]` means that the time-varying factors in the propensities of reactions 0, 1, and 3 have
+            non-zero partial derivatives with respect to the 0th parameter.
+
+        d_propensity_x : Callable[[int, int, np.ndarray, np.ndarray], None]
+            Function to evaluate the derivatives of the time-independent propensity factors with respect to a specified parameter. The
+            first argument is the parameter index, the second the reaction index, the third a 2-d array of input states arranged row-wise,
+            and the final argument is the output 1-d array.
+
+        d_propensity_x_sp : List[List[int]]
+            Sparsity pattern for the partial derivatives of the time-independent propensity factors. Must be a list of
+            array-like objects with `len(d_propensity_x_sp) == num_parameters`.
+            For example, `d_propensity_x_sp[0] = [0, 1, 3]` means that the time-invariant factors in the propensities of reactions 0, 1, and 3 have
+            non-zero partial derivatives with respect to the 0th parameter.
+
+        Returns
+        -------
+        None
+        '''
         cdef int ierr
 
-        if len(d_propensity_t) != len(d_propensity_x):
-            raise RuntimeError("Input d_propensity_t and d_propensity_x must have the same number of elements")
-
         # convert stoich_matrix to armadillo array
-        if stoich_matrix.dtype is not np.intc:
+        if stoich_matrix.dtype != np.intc:
             stoich_matrix = stoich_matrix.astype(np.intc)
         if not stoich_matrix.flags['C_CONTIGUOUS']:
             stoich_matrix = np.ascontiguousarray(stoich_matrix)
-        if sparsity_patterns.dtype is not np.intc:
-            sparsity_patterns = sparsity_patterns.astype(np.intc)
 
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
                                                               stoich_matrix.shape[0], 0, 1)
 
-        cdef vector[int] tv_react
-        prop_t_ptr = <void*> propensity_t
-        for i in range(0, stoich_matrix.shape[0]):
-            tv_react.push_back(i)
-
-
-
         cdef _fsp.SensModel model_
+
+        cdef void*prop_t_ptr
+        cdef vector[int] tv_react
+
+        if propensity_t is None:
+            prop_t_ptr = NULL
+        else:
+            prop_t_ptr = <void*> propensity_t
+            if tv_reactions is None:
+                for i in range(0, stoich_matrix.shape[0]):
+                    tv_react.push_back(i)
+            else:
+                for i in range(0, len(tv_reactions)):
+                    tv_react.push_back(tv_reactions[i])
+
+        model_.num_parameters_ = num_parameters
         model_.stoichiometry_matrix_ = stoich_matrix_arma
-        model_.prop_t_ = call_py_t_fun_obj
-        model_.prop_x_ = call_py_prop_obj
-        model_.prop_t_args_ = <void*> propensity_t
+        model_.tv_reactions_ = tv_react
+        model_.prop_t_ = call_py_propt_obj
+        model_.prop_x_ = call_py_propx_obj
+        model_.dprop_t_ = call_py_dpropt_obj
+        model_.dprop_x_ = call_py_dpropx_obj
+        model_.prop_t_args_ = prop_t_ptr
         model_.prop_x_args_ = <void*> propensity_x
 
-        model_.num_parameters_ = model_.dprop_x_.size()
+        model_.dprop_t_args_ = <void*> d_propensity_t if d_propensity_t is not None else NULL
+        model_.dprop_x_args_ = <void*> d_propensity_x if d_propensity_x is not None else NULL
 
-        model_.dprop_t_.reserve(len(d_propensity_t))
-        model_.dprop_t_args_.reserve(model_.num_parameters_)
-        for f in d_propensity_t:
-            model_.dprop_t_.push_back(call_py_t_fun_obj)
-            model_.dprop_t_args_.push_back(<void*> f)
+        model_.dprop_t_sp_.reserve(num_parameters)
+        model_.dprop_x_sp_.reserve(num_parameters)
 
-        model_.dprop_x_.reserve(model_.num_parameters_)
-        model_.dprop_x_args_.reserve(model_.num_parameters_)
-        for f in d_propensity_x:
-            model_.dprop_x_.push_back(call_py_prop_obj)
-            model_.dprop_x_args_.push_back(<void*> f)
-
-        cdef vector[int] ic
-        cdef vector[int] irow
-        irow.push_back(0)
-        if sparsity_patterns is not None:
-            for i in range(0, sparsity_patterns.shape[0]):
-                for j in range(0, sparsity_patterns.shape[1]):
-                    if sparsity_patterns[i, j] == 1:
-                        ic.push_back(j)
-                irow.push_back(ic.size())
-        model_.dpropensity_ic_ = ic
-        model_.dpropensity_rowptr_ = irow
-        model_.tv_reactions_ = tv_react
+        if d_propensity_t_sp is not None:
+            for i in range(num_parameters):
+                model_.dprop_t_sp_.push_back(vector[int]())
+                for r in d_propensity_t_sp[i]:
+                    model_.dprop_t_sp_[i].push_back(r)
+        if d_propensity_x_sp is not None:
+            for i in range(num_parameters):
+                model_.dprop_x_sp_.push_back(vector[int]())
+                for r in d_propensity_x_sp[i]:
+                    model_.dprop_x_sp_[i].push_back(r)
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -140,6 +166,21 @@ cdef class SensFspSolverMultiSinks:
             v = np.ascontiguousarray(s0[i]).astype(np.double)
             s0_vector.push_back(arma.Col[_fsp.PetscReal](<double*> v.data, v.size, 1, 1))
         ierr = self.this_[0].SetInitialDistribution(X0_arma, p0_arma, s0_vector)
+        assert (ierr == 0)
+
+    def SetInitialDist1(self, sdd.SensDiscreteDistribution s0):
+        """
+        Set initial condition for the forward sensitivity system.
+
+        Args:
+            s0 (SensDiscretDistribution): Initial probability and sensitivities
+
+        Returns:
+            None
+
+        """
+        cdef int ierr = 0
+        ierr = self.this_[0].SetInitialDistribution(s0.this_[0])
         assert (ierr == 0)
 
     def SetFspShape(self, constr_fun, cnp.ndarray constr_bound, cnp.ndarray exp_factors = None):

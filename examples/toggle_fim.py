@@ -1,39 +1,44 @@
-
-
 import pypacmensl.sensitivity.multi_sinks as sensfsp
 import mpi4py.MPI as mpi
 import numpy as np
 import matplotlib.pyplot as plt
 
 # %%
-stoich_matrix = np.array(
-    [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1]
-    ]
-)
-
-def tcoeff(t, out):
-    out[0] = 35.0
-    out[1] = 0.20
-    out[2] = 50.0
-    out[3] = 1.0
+stoich_matrix = np.array([[1, 0],
+                          [-1, 0],
+                          [0, 1],
+                          [0, -1]])
 
 
 def propensity(reaction, states, outs):
-    if reaction is 0:
-        outs[:] = np.reciprocal(1 + states[:, 1] ** 1.5)
+    if reaction == 0:
+        outs[:] = 35.0*np.reciprocal(1 + states[:, 1] ** 1.5)
         return
-    if reaction is 1:
-        outs[:] = states[:, 0]
+    if reaction == 1:
+        outs[:] = 0.20*states[:, 0]
         return
-    if reaction is 2:
-        outs[:] = np.reciprocal(1 + states[:, 0] ** 2.5)
+    if reaction == 2:
+        outs[:] = 50.0*np.reciprocal(1 + states[:, 0] ** 2.5)
         return
-    if reaction is 3:
-        outs[:] = states[:, 1]
+    if reaction == 3:
+        outs[:] = 1.0*states[:, 1]
+
+def dpropensity(parameter, reaction, states, outs):
+    if parameter == 0:
+        if reaction == 0:
+            outs[:] = np.reciprocal(1 + states[:, 1] ** 1.5)
+            return
+    if parameter == 1:
+        if reaction == 1:
+            outs[:] = states[:, 0]
+            return
+    if parameter == 2:
+        if reaction == 2:
+            outs[:] = np.reciprocal(1 + states[:, 0] ** 2.5)
+            return
+    if parameter == 3:
+        if reaction == 3:
+            outs[:] = states[:, 1]
 
 
 def simple_constr(X, out):
@@ -41,25 +46,7 @@ def simple_constr(X, out):
     out[:, 1] = X[:, 1]
     out[:, 2] = X[:, 0] + X[:, 1]
 
-
 init_bounds = np.array([10, 10, 10])
-
-
-def d_tcoeff_factory(i):
-    def d_tcoeff(t, out):
-        out[i] = 1.0
-
-    return d_tcoeff
-
-
-dtcoeff = []
-for i in range(0, 4):
-    dtcoeff.append(d_tcoeff_factory(i))
-dpropensity = [propensity] * 4
-
-dprop_sparsity = np.zeros((4, 4), dtype=np.intc)
-for i in range(0, 4):
-    dprop_sparsity[i][i] = 1
 
 X0 = np.array([[0, 0]])
 p0 = np.array([1.0])
@@ -74,8 +61,17 @@ comm = mpi.COMM_WORLD
 my_rank = comm.rank
 # %%
 my_solver = sensfsp.SensFspSolverMultiSinks(comm)
-my_solver.SetModel(stoich_matrix, tcoeff, propensity,
-                dtcoeff, dpropensity, dprop_sparsity)
+my_solver.SetModel(
+    4,
+    stoich_matrix=stoich_matrix,
+    propensity_t=None,
+    propensity_x=propensity,
+    tv_reactions=[],
+    d_propensity_t=None,
+    d_propensity_t_sp=None,
+    d_propensity_x=dpropensity,
+    d_propensity_x_sp=[[i] for i in range(4)]
+)
 my_solver.SetFspShape(constr_fun=simple_constr, constr_bound=init_bounds)
 my_solver.SetInitialDist(X0, p0, [s0] * 4)
 my_solver.SetVerbosity(2)
@@ -126,12 +122,13 @@ for i in range(0, len(DetFIMs1)):
 if comm.Get_rank() == 0:
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    plt.rc('text', usetex=True)
+    plt.rc("text", usetex=True)
     plt.plot(t_meas, np.log10(DetFIMs), label="Observing both species")
     plt.plot(t_meas, np.log10(DetFIMs0), label="Observing species 0")
     plt.plot(t_meas, np.log10(DetFIMs1), label="Observing species 1")
-    plt.set_title("Log10-determinant of the Fisher Information Matrix for different combinations of observables")
-    plt.xlabel('Time (sec)')
-    plt.ylabel(r'$\log_{10}(|FIM|)$')
+    plt.title(
+        "Log10-determinant of the Fisher Information Matrix for different combinations of observables"
+    )
+    plt.xlabel("Time (sec)")
+    plt.ylabel(r"$\log_{10}(|FIM|)$")
     plt.show()
-

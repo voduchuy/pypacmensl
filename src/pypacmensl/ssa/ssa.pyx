@@ -57,7 +57,7 @@ cdef class SSASolver:
         num_reactions = self.stoich_matrix_.shape[0]
 
         xtmp = np.zeros((1, num_species), dtype=np.intc)
-        tcoef = np.zeros((num_reactions,))
+        tcoef = np.ones((num_reactions,))
         props = np.zeros((num_reactions,))
         tmp_array = np.zeros((1,))
 
@@ -83,7 +83,8 @@ cdef class SSASolver:
                 # Compute propensities
                 reaction = 0
                 asum = 0.0
-                self.prop_t_(t_now, tcoef)
+                if self.prop_t_ is not None:
+                    self.prop_t_(t_now, tcoef)
                 for r in range(0, num_reactions):
                     self.prop_x_(r, xtmp, tmp_array)
                     propsview[r] = tcoefview[r] * tmpview[0]
@@ -100,7 +101,7 @@ cdef class SSASolver:
                 if t_now + tau > t_final:
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_reactions):
                     tmp = tmp + propsview[reaction]
@@ -207,7 +208,7 @@ cdef class SSASolver:
                 if t_now + tau > t_final:
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_reactions):
                     tmp = tmp + propsview[reaction]
@@ -260,8 +261,7 @@ cdef class SSATrajectory:
         :return X : numpy array of sampled states at time t_final, each row is a state.
         """
         cdef:
-            # int rank, num_procs, num_samples_local
-            int num_species, num_reactions, num_steps
+            int num_species, num_reactions, num_steps, itime
             int reaction
             double t_now, r1, r2, tau, t_final
             double asum, tmp
@@ -283,9 +283,9 @@ cdef class SSATrajectory:
 
         X = np.zeros((num_steps, num_species), dtype=np.intc)
 
-        X[0, :] = x0
         t_now = 0.0
         xtmp = np.copy(x0)
+        itime = 0
         while t_now < t_final:
             r1 = random_sample()
             r2 = random_sample()
@@ -300,23 +300,44 @@ cdef class SSATrajectory:
                 asum = asum + props[r]
 
             # Decide time step
-            tau = log(1.0 / r1) / asum
+            if asum == 0.0:
+                while tspan[itime] <= t_final:
+                    X[itime,:] = xtmp
+                    itime += 1
+                    if itime >= len(tspan):
+                        break
+                break
+            else:
+                tau = log(1.0 / r1) / asum
 
             if tau < 0.0:
                 break
 
             if t_now + tau > t_final:
+                while tspan[itime] <= t_final:
+                    X[itime,:] = xtmp
+                    itime += 1
+                    if itime >= len(tspan):
+                        break
                 break
 
-            # Determine the reaction that will happen
+            # Determine the reaction_idx that will happen
             tmp = 0.0
             for reaction in range(0, num_reactions):
                 tmp = tmp + props[reaction]
                 if tmp >= r2 * asum:
                     break
 
-            X[0, :] = xtmp[:] + self.stoich_matrix_[reaction, :]
             t_now = t_now + tau
+            xtmp += self.stoich_matrix_[reaction,:]
+            print(t_now)
+
+            while tspan[itime] <= t_now:
+                X[itime,:] = xtmp
+                itime += 1
+                if itime >= len(tspan):
+                        break
+
         return X
 
 cdef class PmPdmsrSampler:
@@ -455,7 +476,7 @@ cdef class PmPdmsrSampler:
                     (poisson_state_tmp[:] - self.f_transcr_(xtmp[0, :])/self.deg_rates_)*np.exp(-self.deg_rates_*tau)
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_transitions):
                     tmp = tmp + propsview[reaction]
@@ -526,7 +547,7 @@ cdef class PmPdmsrSampler:
 
         update_rates: double
             A small number to safeguard against timepoints where all propensities are zero. In particular,
-            we add a "null" reaction that does nothing, but has a small rate, so that when all the usual propensities are zero,
+            we add a "null" reaction_idx that does nothing, but has a small rate, so that when all the usual propensities are zero,
             the SSA will only jump a small step ahead rather than to the final endpoint.
 
         Returns
@@ -611,7 +632,7 @@ cdef class PmPdmsrSampler:
                                            (poisson_state_tmp[:] - self.f_transcr_(xtmp[0, :])/self.deg_rates_)*np.exp(-self.deg_rates_*tau)
                     break
 
-                # Determine the reaction that will happen
+                # Determine the reaction_idx that will happen
                 tmp = 0.0
                 for reaction in range(0, num_reactions+1):
                     tmp = tmp + propsview[reaction]

@@ -1,8 +1,6 @@
 import os
-from sys import platform
-from distutils.core import setup, Extension
+from setuptools import setup
 from Cython.Build import cythonize
-from glob import glob
 import numpy as np
 from os.path import join
 
@@ -55,7 +53,6 @@ setup(
                      'pypacmensl.fsp_solver':  'src/pypacmensl/fsp_solver',
                      'pypacmensl.state_set':   'src/pypacmensl/state_set',
                      'pypacmensl.sensitivity': 'src/pypacmensl/sensitivity',
-                     # 'pypacmensl.stationary':  'src/pypacmensl/stationary'
                      },
         ext_modules= pypacmensl_ext,
         **metadata

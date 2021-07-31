@@ -1,5 +1,5 @@
 from pypacmensl.fsp_solver import FspSolverMultiSinks
-from pypacmensl.ssa.ssa import PmPdmsrSampler
+from pypacmensl.ssa.ssa import PmPdmsrSampler, SSASolver
 import mpi4py.MPI as mpi
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,11 +51,11 @@ solver.SetInitialDist(x0, p0)
 solver.SetVerbosity(2)
 solver.SetOdeSolver("KRYLOV")
 solver.SetUp()
-solutions = solver.SolveTspan(tspan, 1.0e-4)
+cme_solutions = solver.SolveTspan(tspan, 1.0e-4)
 
 marginals_fsp = []
 for j in range(0, n_t):
-    marginals_fsp.append(solutions[j].Marginal(2))
+    marginals_fsp.append(cme_solutions[j].Marginal(2))
 #%% Monte Carlo approximation with PMPDMSR
 def rna_dist_from_samples(comm: mpi.Comm, poisson_samples: np.ndarray, nmax: int) -> np.ndarray:
 
@@ -88,3 +88,4 @@ if mpi.COMM_WORLD.Get_rank() == 0:
         axs[j].plot(marginals_fsp[j], color="b", label="FSP")
         axs[j].legend()
     plt.show()
+

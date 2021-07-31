@@ -19,24 +19,28 @@ cdef class FspSolverMultiSinks:
 
         Set the stochastic chemical kinetics model to be solved.
 
-        :param stoich_matrix: stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
+        Parameters
+        ==========
 
-        :param propensity_t:
-                (Optional) callable object for computing the time-dependent coefficients. It must have signature
-                        def propensity_t( t, out )
-                where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
-                This is only needed when solving a model with time-varying propensities, in which case you also need to
-                input tv_reactions. If set to None, the model is assumed to have time-invariant propensities.
+        stoich_matrix: array
+            stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
 
-        :param propensity_x:
-                callable object representing the time-independent factors of the propensities. It must have signature
-                        def propensity_x( i_reaction, states, out )
-                where i_reaction is the reaction index, states[:, :] an array where each row is an input state, and out[:] is
-                the output array to be written to.
+        propensity_t: Callable
+            (Optional) callable object for computing the time-dependent coefficients. It must have signature
+                    def propensity_t( t, out )
+            where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
+            This is only needed when solving a model with time-varying propensities, in which case you also need to
+            input tv_reactions. If set to None, the model is assumed to have time-invariant propensities.
 
-        :param tv_reactions:
-                (Optional) array-like object that stores the indices of the reactions whose propensities are time-varying.
-                If not specified or set to None, but with propensity_t specified, we assume that all reaction propensities are time-varying.
+        propensity_x: Callable
+            callable object representing the time-independent factors of the propensities. It must have signature
+                    def propensity_x( i_reaction, states, out )
+            where i_reaction is the reaction_idx index, states[:, :] an array where each row is an input state, and out[:] is
+            the output array to be written to.
+
+        tv_reactions: List
+            (Optional) list of indices of the reactions whose propensities are time-varying.
+            If not specified or set to None, but with propensity_t specified, we assume that all reaction_idx propensities are time-varying.
         """
         cdef int ierr
         if stoich_matrix.dtype is not np.intc:
@@ -61,8 +65,8 @@ cdef class FspSolverMultiSinks:
                 for i in range(0, len(tv_reactions)):
                     tv_react.push_back(tv_reactions[i])
 
-        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_t_fun_obj,
-                                            call_py_prop_obj, prop_t_ptr, <void*> propensity_x, tv_react)
+        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_propt_obj,
+                                            call_py_propx_obj, prop_t_ptr, <void*> propensity_x, tv_react)
 
         ierr = self.this_[0].SetModel(model_)
 
@@ -161,9 +165,11 @@ cdef class FspSolverMultiSinks:
         Parameters
         ==========
 
-        rel_tol : relative tolerance
+        rel_tol : float
+            relative tolerance
 
-        abs_tol : absolute tolerance
+        abs_tol : float
+            absolute tolerance
 
         """
         self.this_[0].SetOdeTolerances(rel_tol, abs_tol)
@@ -172,8 +178,6 @@ cdef class FspSolverMultiSinks:
         """
         Allocate resources for the FSP solver. This method is called implicitly within Solve() and SolveTspan() so normal
         users do not need to bother with it.
-        :return:
-        :rtype:
         """
         self.this_[0].SetUp()
         self.set_up_ = True
