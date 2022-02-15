@@ -185,14 +185,24 @@ cdef class FspSolverMultiSinks:
     def Solve(self, double t_final, double fsp_tol = -1.0, double t_init = 0.0, ):
         """
         Solve the CME up to a time point.
-        :param t_final: final time.
-        :type t_final: float.
-        :param fsp_tol: FSP error tolerance. The solver will expand the state set to ensure the final truncation error is within tolerance.
-        :type fsp_tol: float.
-        If set to negative, the solver will not check the error.
-        :param t_init: (optional) Initial time (default is 0).
-        :return: solution at t_final.
-        :rtype: DiscreteDistribution.
+
+        Parameters
+        -----------
+
+        t_final: double
+            final time.
+
+        fsp_tol: double
+            FSP error tolerance. The solver will expand the state set to ensure the final truncation error is within tolerance. If set to negative, the solver will not check the error. Default value: -1.0.
+
+        t_init: double, optional
+            Initial time (default is 0).
+
+        Returns
+        -------
+        solution: DiscreteDistribution
+            Solution at t_final.
+
         """
         if self.set_up_ is not True:
             self.SetUp()
@@ -224,8 +234,9 @@ cdef class FspSolverMultiSinks:
 
         Returns
         -------
+        solutions:
+            List of DiscreteDistribution. The i-th member corresponds to the approximate solution at time tspan[i].
 
-        list of DiscreteDistribution. The i-th member corresponds to the approximate solution at time tspan[i].
         """
         if self.set_up_ is not True:
             self.SetUp()
@@ -266,6 +277,7 @@ cdef class FspSolverMultiSinks:
     def SetPetscTSType(self, type='rosw'):
         """
         Set the type of integrator when using PETSC's TS module.
+
         :param type: (string) name of the type, must be a name recognizable to PETSc.
         :type type:
         :return:
@@ -278,17 +290,28 @@ cdef class FspSolverMultiSinks:
     def SetKrylovOrthLength(self, int q=-1):
         """
         SetKrylovOrthLength(self, int q=-1)
+
         Set the length of orthogonalization (if q=-1 use full orthogonalization).
-        :param q:
-        :type q:
-        :return:
-        :rtype:
+
+        Parameters
+        ----------
+        q: int
+            Incomplete orthogonalization length.
         """
         self.this_[0].SetKrylovOrthLength(q)
 
     def SetKrylovDimRange(self, int m_min, int m_max):
         """
         Set the range for the dimension of the adaptive Krylov basis.
+
+        Parameters
+        ----------
+        m_min: int
+            Minimum Krylov basis size.
+
+        m_max: int
+            Maximum Krylov basis size.
+
         """
         self.this_[0].SetKrylovDimRange(m_min, m_max)
 

@@ -13,6 +13,15 @@ cdef class SensDiscreteDistribution:
             del self.this_
 
     cpdef GetNumParameters(self):
+        """
+        Get number of sensitivity parameters.
+        
+        Returns
+        -------
+        num_parameters: int 
+            Number of sensitivity parameters.
+            
+        """
         return self.this_[0].dp_.size()
 
     cpdef GetStatesViewer(self):
@@ -26,18 +35,18 @@ cdef class SensDiscreteDistribution:
 
     cpdef GetProbViewer(self):
         """
-        def SensDiscreteDistribution.GetProbViewer() -> numpy.ndarray
+        SensDiscreteDistribution.GetProbViewer() -> numpy.ndarray
         
-            Returns
-            -------
-            A numpy array wrapper for the on-processor section of the probability vector.
-            
-            Notes
-            -----
-            Row i of the output array of GetStatesViewer() maps to the i-th entry of the probability vector 
-            returned by this function. 
-            
-            When done with modifying the array, RestoreProViewer() must be called to return ownership to the object.
+        Returns
+        -------
+        A numpy array wrapper for the on-processor section of the probability vector.
+
+        Notes
+        -----
+        Row i of the output array of GetStatesViewer() maps to the i-th entry of the probability vector
+        returned by this function.
+
+        When done with modifying the array, RestoreProViewer() must be called to return ownership to the object.
         """
         cdef:
             double* prob_ptr
@@ -69,6 +78,20 @@ cdef class SensDiscreteDistribution:
         self.this_[0].RestoreSensView(iS, ptr)
 
     def Marginal(self, int species):
+        """
+        Marginal(species)
+
+        Compute the 1-D marginal distribution.
+
+        Parameters
+        ----------
+        species : int
+            Index of the species.
+
+        Returns
+        -------
+
+        """
         cdef arma.Col[double] marginal = _sdd.Compute1DMarginal(self.this_[0], species)
         cdef double* marginal_ptr = marginal.memptr()
         cdef double[::1] marginal_view = <double[:marginal.n_elem]> marginal_ptr
@@ -77,12 +100,20 @@ cdef class SensDiscreteDistribution:
     def SensMarginal(self, int iS, int species):
         """
         Compute the sensitivity of the marginal distribution.
-        :param iS: sensitivity parameter index.
-        :type iS:
-        :param species: species to compute the marginal distribution for.
-        :type species:
-        :return:
-        :rtype:
+
+        Parameters
+        -----------
+
+        iS: int
+            Index of the sensitivity parameter.
+        species: int
+            Index of the species to compute the marginal distribution for.
+
+        Returns
+        --------
+        svec: 1-D numpy array
+            Sensitivity vector corresponding to the marginal distribution of the input species.
+
         """
         cdef arma.Col[_sdd.PetscReal] smarginal
         cdef int ierr = _sdd.Compute1DSensMarginal(self.this_[0],
@@ -103,6 +134,28 @@ cdef class SensDiscreteDistribution:
         return np.copy(np.asarray(fim_view))
 
     def WeightedAverage(self, iS, nout, weightfun):
+        """
+        WeightedAverage(iS, nout, weightfun)
+
+        Evaluate the expression E(f(X)) or its partial derivatives where X is the random variable distributed according to the probability distribution stored by this object. The function f can be vector-valued.
+
+        Parameters
+        ----------
+        nout : int
+            Dimensionality of the output function f. E.g., if f(x) = (f1(x), f2(x), f3(x)) then nout = 3.
+
+        iS : int
+            Index of the sensitivity parameter. If `iS=-1`, the output will be E(f(x)), otherwise it will be the partial derivative of E(f(x)) with respect to the `iS`-th parameter.
+
+        weightfun : Callable
+            Python function to evaluate f with syntax `weightfun(x, out)` that write the evaluation of `f(x)` into the output array `out`.
+
+        Returns
+        -------
+        fout: 1-D array
+            Output vector of length `nout`.
+
+        """
         fout = np.zeros((nout, ), dtype=np.double)
         fout = np.ascontiguousarray(fout)
         cdef double[::1] foutview = fout

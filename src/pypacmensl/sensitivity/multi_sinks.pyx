@@ -1,4 +1,5 @@
 # distutils: language = c++
+from typing import List
 import numpy as np
 import pypacmensl.utils.environment as env
 
@@ -26,6 +27,8 @@ cdef class SensFspSolverMultiSinks:
                  d_propensity_x_sp=None
                  ):
         '''
+        SetModel(num_parameters, stoich_matrix, propensity_t, propensity_x, tv_reactions, d_propensity_t, d_propensity_t_sp, d_propenxity_x, d_propensity_x_sp)
+
         Set the information of the stochastic reaction network model to be solved by the forward sensitivity FSP.
 
         Parameters
@@ -135,15 +138,25 @@ cdef class SensFspSolverMultiSinks:
 
     def SetInitialDist(self, cnp.ndarray X0, cnp.ndarray p0, s0):
         """
+        SetInitialDist(x0, p0, s0)
+
         Set initial distribution. This must be called before .Solve() or .SolveTspan().
 
-        :param X0: Initial states. Must be a 2-D array-like object, each row is a state.
+        Parameters
+        ----------
 
-        :param p0: Initial probabilities. Must be a 1-D array-like object, each entry maps to a row in X0.
+        x0: 2-D numpy array
+            Initial states. Each row is a state.
 
-        :param s0: List of initial sensitivities. Each vector in this list must have the same layout as p0.
+        p0: 1-D numpy array
+            Initial probabilities. Each entry maps to a row in x0.
 
-        :return: None
+        s0: List of 1-D numpy arrays
+            Initial sensitivities. Each vector in this list must have the same layout as p0.
+
+        Returns
+        -------
+        None
 
         """
         cdef int ierr = 0
@@ -170,6 +183,8 @@ cdef class SensFspSolverMultiSinks:
 
     def SetInitialDist1(self, sdd.SensDiscreteDistribution s0):
         """
+        SetInitialDist1()
+
         Set initial condition for the forward sensitivity system.
 
         Args:
@@ -185,18 +200,22 @@ cdef class SensFspSolverMultiSinks:
 
     def SetFspShape(self, constr_fun, cnp.ndarray constr_bound, cnp.ndarray exp_factors = None):
         """
-        Set constraint functions and bounds that determine the shape of the truncated state space.
+        SetFspShape(constr_fun, constr_bound, exp_factors)
 
-        :param constr_fun: Constraint function. Callable in the form
-                    def constr_fun(states, out)
-        which, upon returning, populate out[i, j] with the value of the j-th constraint function evaluated at states[i,:].
+        Parameters
+        ----------
+        constr_fun : Callable
+            Constraint function. Callable in the form `def constr_fun(states, out)` which, upon returning, populate out[i, j] with the value of the j-th constraint function evaluated at states[i,:].
 
-        :param constr_bound: array of bounds.
+        constr_bound : 1-D array
+            Array of bounds.
 
-        :param exp_factors: array of expansion factors. s
-        :type exp_factors:
-        :return:
-        :rtype:
+        exp_factors : 1-D array
+            Array of expansion factors.
+
+        Returns
+        -------
+            None
         """
         if constr_fun is not None:
             self.this_[0].SetConstraintFunctions(call_py_constr_obj, <void*> constr_fun)
@@ -220,9 +239,34 @@ cdef class SensFspSolverMultiSinks:
         self.this_[0].SetExpansionFactors(exp_factors_arma)
 
     def SetVerbosity(self, int level):
+        """
+        SetVerbosity(level)
+
+        Set the level of outputs to stdout.
+
+        Parameters
+        ----------
+        level : int
+            Output level. 0: no outputs. 1: outputs from the outer FSP loop (when e.g. expanding the state space). 2: like 1 but also include outputs from the inner ODE time-stepper.
+
+        Returns
+        -------
+        None
+        """
         self.this_[0].SetVerbosity(level)
 
     def SetLBMethod(self, method="Graph"):
+        """
+        SetLBMethod(method)
+
+        Parameters
+        ----------
+        method : str, default="Graph"
+
+        Returns
+        -------
+        None
+        """
         if method is None:
             return
         method = method.lower()
@@ -240,13 +284,34 @@ cdef class SensFspSolverMultiSinks:
         """
         Allocate resources for the FSP solver. This method is called implicitly within Solve() and SolveTspan() so normal
         users do not need to bother with it.
-        :return:
-        :rtype:
+
+        Returns
+        -------
+        None
+
         """
         self.this_[0].SetUp()
         self.set_up_ = True
 
     def Solve(self, double t_final, double fsp_tol):
+        """
+        Solve(t_final, fsp_tol)
+
+        Integrate the forward sensitivity CME and output the solution at the end time.
+
+        Parameters
+        ----------
+        t_final : double
+            Final time.
+
+        fsp_tol : double
+            FSP tolerance.
+
+        Returns
+        -------
+        Final solution, an instance of SensDiscreteDistribution.
+
+        """
         if self.set_up_ is not True:
             self.SetUp()
 
@@ -259,6 +324,24 @@ cdef class SensFspSolverMultiSinks:
         return solution
 
     def SolveTspan(self, tspan, double fsp_tol):
+        """
+        SolveTspan(tspan, fsp_tol)
+
+        Integrate the forward sensitivity CME and output solutions at intermediate times.
+
+        Parameters
+        ----------
+        tspan : 1-D array
+            Output times.
+
+        fsp_tol : double
+            Tolerance of the FSP.
+
+        Returns
+        -------
+        List of intermediate solutions. Each element is an instance of the SensDiscreteDistribution class.
+
+        """
         if self.set_up_ is not True:
             self.SetUp()
         cdef int ntspan = tspan.size
@@ -273,5 +356,12 @@ cdef class SensFspSolverMultiSinks:
         return snapshots
 
     def ClearState(self):
+        """
+        Clear internal data structures.
+
+        Returns
+        -------
+        None
+        """
         self.this_[0].ClearState()
         self.set_up_ = False
