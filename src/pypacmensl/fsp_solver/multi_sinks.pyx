@@ -3,6 +3,10 @@ import pypacmensl.utils.environment as env
 import numpy as np
 import mpi4py.MPI as mpi
 
+def _default_propensity(reaction, x, out):
+    out[:] = 0.0
+    return None
+
 cdef class FspSolverMultiSinks:
     def __cinit__(self, mpi.Comm comm = mpi.COMM_WORLD):
         self.this_ = new _fsp.FspSolverMultiSinks(comm.ob_mpi)
@@ -13,7 +17,11 @@ cdef class FspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x, tv_reactions = None):
+    def SetModel(self,
+                 cnp.ndarray stoich_matrix,
+                 propensity_t=None,
+                 propensity_x=_default_propensity,
+                 tv_reactions = None):
         """
         def SetModel(self, stoich_matrix, propensity_x, propensity_t, tv_reactions)
 
@@ -38,9 +46,8 @@ cdef class FspSolverMultiSinks:
             where i_reaction is the reaction_idx index, states[:, :] an array where each row is an input state, and out[:] is
             the output array to be written to.
 
-        tv_reactions: List
-            (Optional) list of indices of the reactions whose propensities are time-varying.
-            If not specified or set to None, but with propensity_t specified, we assume that all reaction_idx propensities are time-varying.
+        tv_reactions: list, optional
+            List of indices of the reactions whose propensities are time-varying. If propensity_t is set to None, the value of this argument does not matter.  If propensity_t is specified and this argument is set to None, we assume that all reactions have time-varying rates.
         """
         cdef int ierr
         if stoich_matrix.dtype is not np.intc:
@@ -76,12 +83,12 @@ cdef class FspSolverMultiSinks:
         """
         Set initial distribution. This must be called before .Solve() or .SolveTspan().
 
-        :param X0: Initial states. Must be a 2-D array-like object, each row is a state.
-
-        :param p0: Initial probabilities. Must be a 1-D array-like object, each entry maps to a row in X0.
-
-        :return: None
-
+        Parameters
+        ----------
+        X0 : 2-D array
+            Initial states. Each row is a state.
+        p0 : 1-D array
+            Initial probabilities. Each entry maps to a row in X0.
         """
         cdef int ierr = 0
         assert (X0.ndim == 2)
@@ -259,10 +266,11 @@ cdef class FspSolverMultiSinks:
         """
         Set the ODE solver for the truncated CME problem. Currently we support the Krylov integrator for time invariant propensities
         and Sundials' CVODES integrator for time-varying propensities.
-        :param solver: a string in {"CVODE","KRYLOV","EPIC"}.
-        :type solver: string.
-        :return: None.
-        :rtype: None.
+
+        Parameters
+        ----------
+        solver : str
+            A string in {"CVODE","KRYLOV","EPIC"}.
         """
         solver = solver.lower()
         if solver == 'cvode':
@@ -278,10 +286,11 @@ cdef class FspSolverMultiSinks:
         """
         Set the type of integrator when using PETSC's TS module.
 
-        :param type: (string) name of the type, must be a name recognizable to PETSc.
-        :type type:
-        :return:
-        :rtype:
+        Parameters
+        ----------
+        type : str
+            Name of the solver to be used by PETSc TS backend, e.g., 'rosw'.
+
         """
         type = type.lower()
         cdef string type_str = type.encode('ASCII')

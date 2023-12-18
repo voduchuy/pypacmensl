@@ -1,4 +1,5 @@
 from libcpp cimport bool
+from libcpp.vector cimport vector
 from mpi4py.libmpi cimport MPI_Comm
 
 cimport mpi4py.MPI as mpi

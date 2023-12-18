@@ -2,6 +2,10 @@
 import numpy as np
 import pypacmensl.utils.environment as environment
 
+def _default_propensity(reaction, x, out):
+    out[:] = 0.0
+    return None
+
 cdef class StationaryFspSolverMultiSinks:
     def __cinit__(self, mpi.Comm comm = None):
         if comm is None:
@@ -15,24 +19,37 @@ cdef class StationaryFspSolverMultiSinks:
         if self.this_ is not NULL:
             del self.this_
 
-    def SetModel(self, cnp.ndarray stoich_matrix, propensity_t, propensity_x):
+    def SetModel(self,
+                 cnp.ndarray stoich_matrix,
+                 propensity_t=None,
+                 propensity_x=_default_propensity,
+                 tv_reactions = None):
         """
-        def SetModel(self, stoich_matrix, t_fun, propensity)
+        def SetModel(self, stoich_matrix, propensity_x, propensity_t, tv_reactions)
 
         Set the stochastic chemical kinetics model to be solved.
 
-        :param stoich_matrix: stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
+        Parameters
+        ==========
 
-        :param propensity_t:
-                callable object for computing the time-dependent coefficients. It must have signature
-                        def propensity_t( t, out )
-                where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
+        stoich_matrix: array
+            stoichiometry matrix stored in an array. Each row is a stoichiometry vector.
 
-        :param propensity_x:
-                callable object representing the time-independent factors of the propensities. It must have signature
-                        def propensity_x( i_reaction, states, out )
-                where i_reaction is the reaction_idx index, states[:, :] an array where each row is an input state, and out[:] is
-                the output array to be written to.
+        propensity_t: Callable
+            (Optional) callable object for computing the time-dependent coefficients. It must have signature
+                    def propensity_t( t, out )
+            where t is a scalar, and out is an array to be written to with the values of the coefficients at time t.
+            This is only needed when solving a model with time-varying propensities, in which case you also need to
+            input tv_reactions. If set to None, the model is assumed to have time-invariant propensities.
+
+        propensity_x: Callable
+            callable object representing the time-independent factors of the propensities. It must have signature
+                    def propensity_x( i_reaction, states, out )
+            where i_reaction is the reaction_idx index, states[:, :] an array where each row is an input state, and out[:] is
+            the output array to be written to.
+
+        tv_reactions: list, optional
+            List of indices of the reactions whose propensities are time-varying. If propensity_t is set to None, the value of this argument does not matter.  If propensity_t is specified and this argument is set to None, we assume that all reactions have time-varying rates.
         """
         cdef int ierr
         if stoich_matrix.dtype is not np.intc:
@@ -41,10 +58,24 @@ cdef class StationaryFspSolverMultiSinks:
             stoich_matrix = np.ascontiguousarray(stoich_matrix)
 
         cdef arma.Mat[int] stoich_matrix_arma = arma.Mat[int](<int*> stoich_matrix.data, stoich_matrix.shape[1],
-                                                              stoich_matrix.shape[0], True, False)
+                                                              stoich_matrix.shape[0], 0, 1)
 
-        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_propt_obj, call_py_propx_obj,
-                                            <void*> propensity_t, <void*> propensity_x)
+        cdef void*prop_t_ptr
+        cdef vector[int] tv_react
+
+        if propensity_t is None:
+            prop_t_ptr = NULL
+        else:
+            prop_t_ptr = <void*> propensity_t
+            if tv_reactions is None:
+                for i in range(0, stoich_matrix.shape[0]):
+                    tv_react.push_back(i)
+            else:
+                for i in range(0, len(tv_reactions)):
+                    tv_react.push_back(tv_reactions[i])
+
+        cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_propt_obj,
+                                            call_py_propx_obj, prop_t_ptr, <void*> propensity_x, tv_react)
 
         ierr = self.this_[0].SetModel(model_)
 

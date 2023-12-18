@@ -6,7 +6,7 @@ from os.path import join
 
 metadata = {
         'name':             'pypacmensl',
-        'version':          '0.0.1',
+        'version':          '0.1.1',
         'keywords':         'chemical master equation \ finite state projection \ parallel computing',
         'license':          'BSD',
         'author':           'Huy Vo',
@@ -28,7 +28,7 @@ pypacmensl_dirs = ['./src/pypacmensl']
 pypacmensl_ext=[]
 
 pypacmensl_subpackages=['callbacks', 'arma', 'fsp_solver', 'sensitivity', 'smfish', 'state_set',
-                        # 'stationary',
+                         'stationary',
                         'utils', 'ssa']
 
 for folder in pypacmensl_subpackages:
@@ -53,6 +53,7 @@ setup(
                      'pypacmensl.fsp_solver':  'src/pypacmensl/fsp_solver',
                      'pypacmensl.state_set':   'src/pypacmensl/state_set',
                      'pypacmensl.sensitivity': 'src/pypacmensl/sensitivity',
+                     'pypacmensl.stationary': 'src/pypacmensl/stationary'
                      },
         ext_modules= pypacmensl_ext,
         **metadata

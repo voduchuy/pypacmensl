@@ -3,6 +3,10 @@ from typing import List
 import numpy as np
 import pypacmensl.utils.environment as env
 
+def _default_propensity(reaction, x, out):
+    out[:] = 0.0
+    return None
+
 cdef class SensFspSolverMultiSinks:
     def __cinit__(self, mpi.Comm comm = None):
         if comm is None:
@@ -18,9 +22,9 @@ cdef class SensFspSolverMultiSinks:
     def SetModel(self,
                  int num_parameters,
                  cnp.ndarray stoich_matrix,
-                 propensity_t,
-                 propensity_x,
-                 tv_reactions,
+                 propensity_t=None,
+                 propensity_x=_default_propensity,
+                 tv_reactions=[],
                  d_propensity_t=None,
                  d_propensity_t_sp=None,
                  d_propensity_x=None,
@@ -43,14 +47,14 @@ cdef class SensFspSolverMultiSinks:
         propensity_t : Callable[[float, np.ndarray], None]
             Function to evaluate the time-varying coefficients of the propensities. This could be set to None if all
             reaction propensities are time-independent. The callable should fill only the entries corresponding to time-varying propensities
-            in the output array.
+            in the output array. Default: None.
 
         propensity_x : Callable[[int, np.ndarray, np.ndarray], None]
             Function to evaluate the state-dependent factors of the propensities. The first argument is the reaction index,
-            the second argument is the input array of states (arranged row-wise), the third argument is the 1-d output array.
+            the second argument is the input array of states (arranged row-wise), the third argument is the 1-d output array. Default is a zero function that write zeros to all entries of the output array.
 
         tv_reactions : List[int]
-            List of time-varying reactions. If empty, we assume all reactions are time-independent.
+            List of time-varying reactions. If `propensity_t` is None, the value for this argument does not matter. If `propensity_t` is specified and this list is empty, we assume ALL reactions are time-varying.
 
         d_propensity_t : Callable[[int, float, np.ndarray], None]
             Function to evaluate the derivatives of the time-varying propensity coefficients with respect to a specified parameter.
