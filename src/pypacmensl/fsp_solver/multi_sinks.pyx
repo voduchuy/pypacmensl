@@ -73,7 +73,7 @@ cdef class FspSolverMultiSinks:
                     tv_react.push_back(tv_reactions[i])
 
         cdef _fsp.Model model_ = _fsp.Model(stoich_matrix_arma, call_py_propt_obj,
-                                            call_py_propx_obj, prop_t_ptr, <void*> propensity_x, tv_react)
+                                            call_py_propx_obj, <void*> prop_t_ptr, <void*> propensity_x, tv_react)
 
         ierr = self.this_[0].SetModel(model_)
 

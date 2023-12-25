@@ -1,5 +1,5 @@
 import mpi4py.MPI as MPI
-from pypacmensl.fsp_solver import FspSolverMultiSinks
+from pypacmensl.stationary import StationaryFspSolverMultiSinks
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
@@ -61,13 +61,12 @@ def rep_constr(X, out):
     out[:, 4] = np.multiply(X[:, 2], X[:, 1])
     out[:, 5] = np.multiply(X[:, 0], X[:, 2])
 
-
-init_bounds = np.array([22, 2, 2, 44, 4, 44])
+init_bounds = np.array([10, 10, 10, 44, 4, 44])
 exp_factors = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
 rank = MPI.COMM_WORLD.rank
 
-x0 = np.array([[21, 0, 0]])
+x0 = np.array([[0, 0, 1]])
 p0 = np.array([1.0])
 sm = np.array([[1, 0, 0],
                [-1, 0, 0],
@@ -75,67 +74,24 @@ sm = np.array([[1, 0, 0],
                [0, -1, 0],
                [0, 0, 1],
                [0, 0, -1]])
-tspan = np.linspace(0, 1, 2)
 
 # Create FSP solver object
-solver = FspSolverMultiSinks(MPI.COMM_WORLD)
+solver = StationaryFspSolverMultiSinks(MPI.COMM_WORLD)
 solver.SetModel(sm, None, propensity)
 solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
 solver.SetInitialDist(x0, p0)
-solver.SetOdeSolver("CVODE")
 solver.SetVerbosity(2)
+solution = solver.Solve(1e-4)
 
-t1 = MPI.Wtime()
-solution_cvode = solver.SolveTspan(tspan, 1.0e-4)
-t_cvode = MPI.Wtime() - t1
-
-
-solver.ClearState()
-solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
-solver.SetOdeSolver("KRYLOV")
-solver.SetKrylovOrthLength(-1)
-solver.SetVerbosity(2)
-t1 = MPI.Wtime()
-solution_krylov = solver.SolveTspan(tspan, 1.0e-4)
-t_kry = MPI.Wtime() - t1
-
-
-solver.ClearState()
-solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
-solver.SetOdeSolver("KRYLOV")
-solver.SetKrylovOrthLength(2)
-solver.SetVerbosity(2)
-t1 = MPI.Wtime()
-solution_iop = solver.SolveTspan(tspan, 1.0e-4)
-t_iop = MPI.Wtime() - t1
-
-solver.ClearState()
-solver.SetFspShape(constr_fun=rep_constr, constr_bound=init_bounds)
-solver.SetOdeSolver("PETSC")
-solver.SetVerbosity(2)
-t1 = MPI.Wtime()
-solution_petsc = solver.SolveTspan(tspan, 1.0e-4)
-t_petsc = MPI.Wtime() - t1
-
-if (rank == 0):
-    print(f"Solve with CVODE takes {t_cvode} \n")
-    print(f"Solve with Krylov FOP takes {t_kry} \n")
-    print(f"Solve with Krylov IOP takes {t_iop} \n")
-    print(f"Solve with PETSc takes {t_petsc} \n")
 
 if rank == 0:
-    fig, axes = plt.subplots(len(tspan),3)
+    fig, axes = plt.subplots(1,3)
 
-for it in range(0, len(tspan)):
-    for ix in range(0,3):
-        pmar1 = solution_cvode[it].Marginal(ix)
-        pmar2 = solution_krylov[it].Marginal(ix)
-        pmar3 = solution_iop[it].Marginal(ix)
+for ix in range(0,3):
+        p_marginal = solution.Marginal(ix)
 
         if rank == 0:
-            axes[it, ix].plot(pmar1, label='CVODE', color='r')
-            axes[it, ix].plot(pmar2, label='Krylov', color='b')
-            axes[it, ix].plot(pmar3, label='IOP', color='m')
+            axes[ix].bar(range(0, len(p_marginal)), p_marginal,  color='r')
 
 if rank == 0:
     plt.show()

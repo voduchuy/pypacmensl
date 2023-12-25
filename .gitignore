@@ -6,3 +6,7 @@ dist
 *.npz
 *.cpp
 *.h
+pypacmensl.egg-info/dependency_links.txt
+pypacmensl.egg-info/PKG-INFO
+pypacmensl.egg-info/SOURCES.txt
+pypacmensl.egg-info/top_level.txt

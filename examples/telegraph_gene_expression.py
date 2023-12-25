@@ -68,31 +68,31 @@ if rank == 0:
     ax.fill_between(tspan, meanvar[:, 0] + std, meanvar[:, 0] - std, alpha=0.5)
     fig.savefig('const_ge_rna_mean_var.pdf')
 
-# if rank is 0:
-#     for i in range(0, 3):
-#         for j in range(0, n_t):
-#             # marginals.append(solution.Marginal(i))
-#             ax = fig.add_subplot(3, n_t, i * n_t + 1 + j)
-#             ax.plot(marginals[i * n_t + j])
-#             ax.set_ylim(0, 1)
-#             ax.grid(b=1)
-#
-#             ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-#             plt.setp(ax.get_xticklabels(), fontsize=10)
-#             plt.setp(ax.get_yticklabels(), fontsize=10)
-#
-#             if j is 0:
-#                 ax.set_ylabel('Probability')
-#             # else:
-#             #     ax.set_yticklabels([])
-#
-#             if i is 0:
-#                 ax.set_title('t = ' + str(tspan[j]) + ' min')
-#
-#             if i is 2:
-#                 ax.set_xlabel('Molecule count')
-#             # else:
-#             #     ax.set_xticklabels([])
-#
-#     fig.savefig('const_ge_snapshots.eps', format='eps')
-#     plt.show()
+if rank is 0:
+    for i in range(0, 3):
+        for j in range(0, n_t):
+            # marginals.append(solution.Marginal(i))
+            ax = fig.add_subplot(3, n_t, i * n_t + 1 + j)
+            ax.plot(marginals[i * n_t + j])
+            ax.set_ylim(0, 1)
+            ax.grid(b=1)
+
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+            plt.setp(ax.get_xticklabels(), fontsize=10)
+            plt.setp(ax.get_yticklabels(), fontsize=10)
+
+            if j is 0:
+                ax.set_ylabel('Probability')
+            # else:
+            #     ax.set_yticklabels([])
+
+            if i is 0:
+                ax.set_title('t = ' + str(tspan[j]) + ' min')
+
+            if i is 2:
+                ax.set_xlabel('Molecule count')
+            # else:
+            #     ax.set_xticklabels([])
+
+    fig.savefig('const_ge_snapshots.eps', format='eps')
+    plt.show()
